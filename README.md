@@ -85,7 +85,7 @@ prueba ocupa **media hoja A4 apaisada (210 × 148,5 mm) por las dos caras**.
 | Archivo | Para qué |
 |---|---|
 | `index.html` | Pantallas (Banco, Armar, Vista previa, Guardadas, Ayuda), modales y carga de scripts. |
-| `css/generador.css` | Estilos de la interfaz (misma paleta que el calificador), del "papel" y de impresión (`@media print`). |
+| `css/generador.css` | Estilos de la interfaz (tema claro; acento verde como el calificador), del "papel" y de impresión (`@media print`). |
 | `js/util.js` | Utilidades: ids, fechas, azar con semilla (mulberry32), archivos, formato de números y texto enriquecido (`^{}`, `_{}`, `**`). |
 | `js/formulas.js` | Evaluador de fórmulas propio (sin `eval`): tokenizador + analizador descendente; funciones y constantes permitidas. |
 | `js/almacen.js` | IndexedDB (`generador-omr`: `preguntas`, `pruebas`) y localStorage (borrador, ajustes). |
