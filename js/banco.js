@@ -278,8 +278,8 @@ function editorRender() {
           <div class="form-group">
             <label>Enunciado</label>
             <textarea class="input" id="editorEnunciado" rows="5" oninput="editorCampo('enunciado', this.value)" placeholder="${esCalc ? 'Un móvil parte del reposo con aceleración {a} m/s^{2} durante {t} s. ¿Qué distancia recorre?' : 'Escribe aquí la pregunta…'}">${escapeHtml(p.enunciado)}</textarea>
-            <div class="simbolos">${SIMBOLOS.map((s) => `<button type="button" onclick="editorInsertar('${s}')">${s}</button>`).join('')}</div>
-            <div class="field-note">${esCalc ? 'Escribe cada dato entre llaves con el nombre de su variable: <code>{v}</code>, <code>{t}</code>. ' : ''}Formato: <code>^{2}</code> superíndice, <code>_{0}</code> subíndice, <code>**negrita**</code>.</div>
+            <div class="simbolos">${SIMBOLOS.map((s) => `<button type="button" onclick="editorInsertar('${s}')">${s}</button>`).join('')}<button type="button" class="latex" title="Insertar ecuación LaTeX" onclick="editorInsertarLatex()">$x²$</button></div>
+            <div class="field-note">${esCalc ? 'Escribe cada dato entre llaves con el nombre de su variable: <code>{v}</code>, <code>{t}</code>. ' : ''}Formato: <code>^{2}</code> superíndice, <code>_{0}</code> subíndice, <code>**negrita**</code>. Ecuaciones LaTeX entre dólares: <code>$ax + by + c = 0$</code> (ver Ayuda).</div>
           </div>
           <div class="form-group">
             <label>Imagen o diagrama (opcional)</label>
@@ -426,6 +426,18 @@ function editorInsertar(simbolo) {
   const ini = ta.selectionStart, fin = ta.selectionEnd;
   ta.value = ta.value.slice(0, ini) + simbolo + ta.value.slice(fin);
   ta.selectionStart = ta.selectionEnd = ini + simbolo.length;
+  ta.focus();
+  editorCampo('enunciado', ta.value);
+}
+
+// Inserta $…$ (o envuelve la selección) y deja el cursor dentro.
+function editorInsertarLatex() {
+  const ta = document.getElementById('editorEnunciado');
+  const ini = ta.selectionStart, fin = ta.selectionEnd;
+  const sel = ta.value.slice(ini, fin);
+  ta.value = ta.value.slice(0, ini) + '$' + sel + '$' + ta.value.slice(fin);
+  ta.selectionStart = ini + 1;
+  ta.selectionEnd = ini + 1 + sel.length;
   ta.focus();
   editorCampo('enunciado', ta.value);
 }

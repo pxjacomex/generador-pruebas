@@ -204,6 +204,7 @@ textarea.input { resize: vertical; line-height: 1.4; min-height: 44px; }
   min-width: 30px; height: 28px; cursor: pointer; font-size: 14px; font-family: var(--papel-fuente);
 }
 .simbolos button:hover { border-color: var(--accent-text); }
+.simbolos button.latex { min-width: 44px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; color: var(--accent-text); }
 .imagen-ctl { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
 .imagen-preview { width: 160px; height: 110px; object-fit: contain; background: #fff; border: 1px solid var(--border); border-radius: 8px; flex: 0 0 auto; }
 .imagen-preview.vacia { display: grid; place-items: center; background: var(--bg-input); color: var(--text-muted); font-size: 12px; border: 1px dashed var(--border-hl); }
@@ -286,28 +287,24 @@ table.tabla-sets, table.tabla-valores, table.tabla-claves { border-collapse: col
   color: var(--text-dim); font-weight: 600; white-space: nowrap;
 }
 .media { width: 210mm; height: 148.5mm; overflow: hidden; position: relative; background: #fff; }
-.cara { height: 100%; overflow: hidden; padding: 5mm 6mm 5mm; font-size: 10pt; line-height: 1.28; color: #000; }
+.cara { position: relative; height: 100%; overflow: hidden; padding: 5mm 6mm 5mm; font-size: 10pt; line-height: 1.28; color: #000; }
 .linea-corte {
   position: absolute; left: 0; right: 0; top: 148.5mm; height: 0; border-top: 0.3mm dashed #999; pointer-events: none;
 }
 .linea-corte span { position: absolute; left: 3mm; top: -2.6mm; font-size: 9pt; color: #999; background: #fff; padding: 0 1mm; line-height: 1; }
 .hoja.a4 .media + .media, .hoja.a4 .linea-corte + .media { position: absolute; top: 148.5mm; left: 0; }
 
-.cabecera-omr { position: relative; margin: 0 auto 1.6mm; }
+.cabecera-omr { position: relative; margin: 0 auto 2.2mm; }
 .cabecera-omr img { display: block; }
 .marca-f { position: absolute; background: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-.titulo-prueba { display: flex; align-items: baseline; gap: 3mm; flex-wrap: wrap; margin: 0 0 1mm; border-bottom: 0.25mm solid #000; padding-bottom: 0.8mm; }
-.titulo-prueba .titulo { font-weight: 700; font-size: 1.1em; }
-.titulo-prueba .forma { font-weight: 700; border: 0.35mm solid #000; padding: 0 1.6mm; border-radius: 1mm; font-size: 1em; }
-.titulo-prueba .detalle { margin-left: auto; font-size: 0.9em; }
-.instrucciones { font-size: 0.86em; color: #222; margin-bottom: 1.6mm; }
-.mini-cabecera { display: flex; gap: 3mm; align-items: baseline; border-bottom: 0.25mm solid #000; padding-bottom: 0.8mm; margin-bottom: 1.8mm; font-size: 0.9em; }
-.mini-cabecera .titulo { font-weight: 700; }
-.mini-cabecera .forma { font-weight: 700; border: 0.3mm solid #000; padding: 0 1.4mm; border-radius: 1mm; }
-.mini-cabecera .nombre { margin-left: auto; display: flex; gap: 1.5mm; align-items: baseline; }
-.mini-cabecera .linea { display: inline-block; width: 60mm; border-bottom: 0.2mm solid #000; height: 0.8em; }
+.instrucciones { font-size: 0.86em; color: #222; margin-bottom: 1.8mm; }
+/* Cara 2: línea "Nombre" opcional, sin título ni separador */
+.linea-nombre { display: flex; gap: 2mm; align-items: baseline; margin: 0 0 2.5mm; font-size: 0.9em; }
+.linea-nombre .linea { flex: 1 1 auto; max-width: 110mm; border-bottom: 0.25mm solid #000; height: 0.9em; }
 
-.cuerpo { }
+/* flow-root: los márgenes de las preguntas quedan dentro del cuerpo y su alto
+   se mide completo (lo usa paginarForma para repartir el espacio libre). */
+.cuerpo { display: flow-root; }
 .pregunta { margin: 0 0 2.2mm; break-inside: avoid; }
 .pregunta .fig-der { float: right; margin: 0 0 1.2mm 3mm; display: block; max-width: 48%; height: auto; }
 .pregunta .fig-abajo { text-align: center; margin: 1mm 0 1.2mm; }
@@ -323,6 +320,11 @@ table.tabla-sets, table.tabla-valores, table.tabla-claves { border-collapse: col
 .opcion .letra { font-weight: 700; flex: 0 0 auto; }
 .opcion .txt { overflow-wrap: anywhere; }
 sup, sub { font-size: 0.72em; line-height: 0; }
+
+/* Ecuaciones (KaTeX) dentro del texto de la prueba */
+.katex { font-size: 1.06em; }
+.katex-display { margin: 0.35em 0; }
+.tex-sin-motor, .tex-error { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9em; color: #b3261e; }
 
 /* ===== Impresión ===== */
 @media print {

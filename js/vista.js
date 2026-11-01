@@ -139,7 +139,10 @@ function montarPapel(papel, nodo, fuentePt, anchoReal) {
   interior.appendChild(nodo);
   papel.appendChild(interior);
   papel.style.height = '';
-  if (anchoReal) ajustarPapel(papel);
+  if (anchoReal) {
+    ajustarPapel(papel);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => ajustarPapel(papel)).catch(() => {});
+  }
 }
 
 function ajustarPapel(papel) {
@@ -190,24 +193,13 @@ function construirMedia(prueba, forma, cara, cabeceraURL) {
       cab.appendChild(m);
     }
     caraEl.appendChild(cab);
-
-    const tit = el('div', 'titulo-prueba');
-    const partes = [];
-    if (prueba.curso.trim()) partes.push(escapeHtml(prueba.curso.trim()));
-    if (prueba.fecha.trim()) partes.push('Fecha: ' + escapeHtml(prueba.fecha.trim()));
-    tit.innerHTML = `<span class="titulo">${escapeHtml(tituloPrueba(prueba))}</span>`
-      + `<span class="forma">Forma ${forma.letra}</span>`
-      + (partes.length ? `<span class="detalle">${partes.join(' · ')}</span>` : '');
-    caraEl.appendChild(tit);
+    // Las preguntas empiezan justo bajo la cabecera (y las instrucciones, si
+    // las hay). La forma se distingue por la casilla F impresa.
     if (prueba.instrucciones.trim()) {
       caraEl.appendChild(el('div', 'instrucciones', textoEnriquecido(prueba.instrucciones.trim())));
     }
-  } else {
-    const mini = el('div', 'mini-cabecera');
-    mini.innerHTML = `<span class="titulo">${escapeHtml(tituloPrueba(prueba))}</span>`
-      + `<span class="forma">Forma ${forma.letra}</span>`
-      + (prueba.opciones.mostrar_nombre_cara2 !== false ? '<span class="nombre">Nombre: <span class="linea"></span></span>' : '');
-    caraEl.appendChild(mini);
+  } else if (prueba.opciones.mostrar_nombre_cara2) {
+    caraEl.appendChild(el('div', 'linea-nombre', '<span>Nombre:</span><span class="linea"></span>'));
   }
   caraEl.appendChild(el('div', 'cuerpo'));
   return media;
@@ -218,24 +210,67 @@ function desborda(media) {
   return cara.scrollHeight > cara.clientHeight + 1;
 }
 
+// Espacio libre bajo las preguntas de una cara, en px (negativo si desborda).
+function espacioLibre(media) {
+  const cara = media.firstElementChild;
+  const cuerpo = cara.querySelector('.cuerpo');
+  const est = getComputedStyle(cara);
+  return cara.clientHeight - parseFloat(est.paddingBottom) - (cuerpo.offsetTop + cuerpo.offsetHeight);
+}
+
 // Reparte las preguntas de una forma entre sus dos caras.
+//  - "Distribuir en dos caras" (por defecto): se elige el corte que deja un
+//    espacio por pregunta parecido en ambas caras y el blanco sobrante se
+//    reparte por igual tras cada pregunta (padding inferior).
+//  - Si no: se llena la cara 1 y el resto pasa a la cara 2.
+//  - preguntas_cara1 fija el corte a mano en ambos casos.
 function paginarForma(prueba, forma, media1, media2) {
   const avisos = [];
   const snapshot = prueba.formas.snapshot || {};
   const nodos = forma.items.map((it) => nodoPregunta(it, (snapshot[it.preguntaId] || {}).imagen, {}));
   const c1 = media1.querySelector('.cuerpo');
   const c2 = media2.querySelector('.cuerpo');
+  const n = nodos.length;
   const pref = prueba.opciones.preguntas_cara1;
   const automatico = pref === 'auto' || pref == null || pref === '';
-  let enCara1 = automatico ? nodos.length : clamp(parseInt(pref, 10) || 0, 0, nodos.length);
-  nodos.forEach((n, i) => (i < enCara1 ? c1 : c2).appendChild(n));
-  if (automatico) {
-    while (desborda(media1) && c1.children.length > 1) {
-      c2.insertBefore(c1.lastElementChild, c2.firstChild);
+  const distribuir = prueba.opciones.distribuir_dos_caras !== false;
+
+  const repartir = (k) => nodos.forEach((nd, i) => { nd.style.paddingBottom = ''; (i < k ? c1 : c2).appendChild(nd); });
+
+  let k = null;
+  if (!automatico) {
+    k = clamp(parseInt(pref, 10) || 0, 0, n);
+    repartir(k);
+  } else if (distribuir && n >= 2) {
+    let mejor = null;
+    for (let cand = 1; cand <= n - 1; cand++) {
+      repartir(cand);
+      const l1 = espacioLibre(media1), l2 = espacioLibre(media2);
+      if (l1 < 0 || l2 < 0) continue;
+      const dif = Math.abs(l1 / cand - l2 / (n - cand));
+      if (!mejor || dif < mejor.dif) mejor = { k: cand, dif };
     }
+    if (mejor) { k = mejor.k; repartir(k); }
+  }
+  if (k == null) {
+    repartir(n);
+    while (desborda(media1) && c1.children.length > 1) c2.insertBefore(c1.lastElementChild, c2.firstChild);
   }
   if (desborda(media1)) avisos.push(`Forma ${forma.letra}: la cara 1 no cabe (reduce la letra o el ancho de las imágenes, o pasa preguntas a la cara 2).`);
   if (desborda(media2)) avisos.push(`Forma ${forma.letra}: la cara 2 no cabe (reduce la letra o el ancho de las imágenes).`);
+
+  // Espacio uniforme tras cada pregunta (solo si todo cabe: si una cara
+  // desborda, se deja el reparto natural para que se vea el problema).
+  if (distribuir && avisos.length === 0) {
+    [[media1, c1], [media2, c2]].forEach(([media, cuerpo]) => {
+      const m = cuerpo.children.length;
+      const libre = espacioLibre(media);
+      if (m > 0 && libre > 1) {
+        const extra = (libre - 1) / m;
+        Array.from(cuerpo.children).forEach((nd) => { nd.style.paddingBottom = extra + 'px'; });
+      }
+    });
+  }
   return avisos;
 }
 
@@ -293,6 +328,8 @@ async function vistaRenderizar() {
   });
 
   await esperarImagenes(hojas);
+  void hojas.offsetHeight;             // fuerza el layout: arranca la carga de fuentes de KaTeX
+  if (document.fonts && document.fonts.ready) await document.fonts.ready.catch(() => {});
   VISTA.avisosPaginacion = [].concat(
     paginarForma(prueba, prueba.formas.A, A1, A2),
     paginarForma(prueba, prueba.formas.B, B1, B2),
@@ -373,6 +410,7 @@ async function vistaMostrar(prueba) {
   const op = prueba.opciones;
   document.getElementById('vistaDisposicion').value = op.disposicion || 'a4';
   document.getElementById('vistaInvertir').checked = !!op.invertir_dorso;
+  document.getElementById('vistaDistribuir').checked = op.distribuir_dos_caras !== false;
   const selCara = document.getElementById('vistaCara1');
   const n = prueba.formas.A.items.length;
   selCara.innerHTML = '<option value="auto">Automático</option>' + Array.from({ length: n + 1 }, (_, k) => `<option value="${k}">${k} en la cara 1</option>`).join('');

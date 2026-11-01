@@ -26,15 +26,18 @@ const MODELO = {
 };
 
 const OPCIONES_PRUEBA_DEFAULT = {
-  fuente_pt: 10,            // tamaño de letra del cuerpo (puntos)
+  v: 2,                     // versión de estos valores por defecto (migración del borrador)
+  fuente_pt: 16,            // tamaño de letra del cuerpo (puntos)
   ancho_cabecera_mm: 198,   // ancho impreso de la cabecera OMR
   marcar_F: true,           // imprimir la casilla F ya pintada (A→1, B→2)
-  separador: ',',           // separador decimal de los números
+  separador: '.',           // separador decimal de los números
   disposicion: 'a4',        // 'a4': dos pruebas por hoja A4; 'a5': páginas sueltas
   invertir_dorso: false,    // intercambiar mitades en la cara 2 (según impresora)
   preguntas_cara1: 'auto',  // 'auto' o número de preguntas en la primera cara
-  mostrar_nombre_cara2: true,
+  distribuir_dos_caras: true, // repartir las preguntas en las dos caras con espacio uniforme
+  mostrar_nombre_cara2: false, // línea "Nombre" al inicio de la cara 2
 };
+const FUENTE_PT_MIN = 8, FUENTE_PT_MAX = 18;
 
 // ============================================
 // PREGUNTAS
@@ -235,9 +238,9 @@ function normalizarPrueba(p) {
     creada: p.creada || base.creada,
     modificada: p.modificada || base.modificada,
   });
-  t.opciones.fuente_pt = clamp(parseFloat(t.opciones.fuente_pt) || 10, 8, 14);
+  t.opciones.fuente_pt = clamp(parseFloat(t.opciones.fuente_pt) || OPCIONES_PRUEBA_DEFAULT.fuente_pt, FUENTE_PT_MIN, FUENTE_PT_MAX);
   t.opciones.ancho_cabecera_mm = clamp(parseFloat(t.opciones.ancho_cabecera_mm) || 198, 150, 200);
-  t.opciones.separador = t.opciones.separador === '.' ? '.' : ',';
+  t.opciones.separador = t.opciones.separador === ',' ? ',' : '.';
   t.opciones.disposicion = t.opciones.disposicion === 'a5' ? 'a5' : 'a4';
   return t;
 }
@@ -261,7 +264,7 @@ function generarFormas(prueba, preguntasPorId, semilla) {
   const ordenA = mezclar(indices, rnd);
   const ordenB = permutacionSinCoincidencias(ordenA, rnd);
 
-  // Por pregunta: set y permutación de opciones de cada forma.
+  // Por pregunta: set de datos de cada forma.
   const decisiones = items.map(({ item, pregunta }, i) => {
     const nSets = pregunta.tipo === 'calculo' ? pregunta.sets.length : 0;
     let setA = null, setB = null;
@@ -277,29 +280,53 @@ function generarFormas(prueba, preguntasPorId, semilla) {
       }
       if (setA === setB) avisos.push(`Pregunta ${i + 1} (${recortar(textoPlano(pregunta.enunciado), 40)}): las dos formas usan el set ${setA + 1}.`);
     }
-    const nOps = pregunta.opciones.length;
-    const identidad = Array.from({ length: nOps }, (_, k) => k);
-    const idxCorrecta = pregunta.opciones.findIndex((o) => o.correcta);
-    let permA = identidad, permB = identidad;
-    if (pregunta.mezclar !== false) {
-      permA = mezclar(identidad, rnd);
-      const posA = permA.indexOf(idxCorrecta);
-      let encontrada = null;
-      for (let k = 0; k < 60 && !encontrada; k++) {
-        const cand = mezclar(identidad, rnd);
-        if (cand.indexOf(idxCorrecta) !== posA && cand.some((v, j) => v !== permA[j])) encontrada = cand;
-      }
-      if (!encontrada) {
-        encontrada = permA.slice();
-        const otra = (posA + 1) % nOps;
-        [encontrada[posA], encontrada[otra]] = [encontrada[otra], encontrada[posA]];
-      }
-      permB = encontrada;
-    } else {
-      avisos.push(`Pregunta ${i + 1}: las opciones no se mezclan (así está marcada en el banco).`);
-    }
-    return { setA, setB, permA, permB };
+    if (pregunta.mezclar === false) avisos.push(`Pregunta ${i + 1}: las opciones no se mezclan (así está marcada en el banco).`);
+    return { setA, setB, permA: null, permB: null };
   });
+
+  // Orden de las opciones. Se recorre cada forma en su orden de impresión y se
+  // elige la posición (letra) de la respuesta correcta de modo que ninguna
+  // letra se repita más de lo imprescindible en la forma: con n preguntas y 4
+  // letras, como máximo ceil(n/4) veces cada una. En la forma B, además, la
+  // correcta cae en una letra distinta a la de la forma A. Los distractores se
+  // reparten al azar en las posiciones restantes.
+  const nOps = MODELO.N_OPCIONES;
+  const maxPorLetra = Math.max(1, Math.ceil(items.length / nOps));
+  function asignarPermutaciones(orden, clave, otraClave) {
+    const conteo = new Array(nOps).fill(0);
+    orden.forEach((idxBase) => {
+      const { pregunta } = items[idxBase];
+      const d = decisiones[idxBase];
+      const idxCorrecta = Math.max(0, pregunta.opciones.findIndex((o) => o.correcta));
+      const identidad = Array.from({ length: pregunta.opciones.length }, (_, k) => k);
+      let pos;
+      if (pregunta.mezclar === false) {
+        pos = idxCorrecta;
+        d[clave] = identidad;
+      } else {
+        const posOtra = d[otraClave] ? d[otraClave].indexOf(idxCorrecta) : -1;
+        const libres = identidad.filter((p) => conteo[p] < maxPorLetra);
+        let candidatas = libres.filter((p) => p !== posOtra);
+        if (!candidatas.length) candidatas = libres;
+        if (!candidatas.length) candidatas = identidad.filter((p) => p !== posOtra);
+        if (!candidatas.length) candidatas = identidad;
+        pos = candidatas[enteroAleatorio(rnd, candidatas.length)];
+        const distractores = mezclar(identidad.filter((k) => k !== idxCorrecta), rnd);
+        const perm = [];
+        for (let p = 0, k = 0; p < identidad.length; p++) perm.push(p === pos ? idxCorrecta : distractores[k++]);
+        // Misma letra correcta que en la otra forma (solo si no quedó otra
+        // opción): al menos que el orden de los distractores sea distinto.
+        if (d[otraClave] && perm.every((v, j) => v === d[otraClave][j]) && distractores.length > 1) {
+          const i1 = perm.findIndex((v, j) => j !== pos), i2 = perm.findIndex((v, j) => j !== pos && j !== i1);
+          [perm[i1], perm[i2]] = [perm[i2], perm[i1]];
+        }
+        d[clave] = perm;
+      }
+      conteo[pos]++;
+    });
+  }
+  asignarPermutaciones(ordenA, 'permA', null);
+  asignarPermutaciones(ordenB, 'permB', 'permA');
 
   function construirForma(def, orden, usarSet, usarPerm) {
     const lista = orden.map((idxBase, pos) => {

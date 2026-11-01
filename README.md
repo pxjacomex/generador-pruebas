@@ -16,9 +16,11 @@ está en [GUIA.md](GUIA.md).
 
 1. **Debe funcionar sin internet** después de la primera visita (service worker
    propio, sin librerías). Si algo falta en caché y no hay red, se avisa.
-2. **Sin paquetes externos**: solo APIs nativas del navegador (IndexedDB,
-   Canvas, File, Cache Storage, Service Worker) y la fuente Outfit de Google
-   Fonts para la interfaz. El evaluador de fórmulas es código propio.
+2. **Sin paquetes externos salvo los imprescindibles y de confianza**: APIs
+   nativas del navegador (IndexedDB, Canvas, File, Cache Storage, Service
+   Worker), la fuente Outfit de Google Fonts para la interfaz y **KaTeX**
+   (MIT, Khan Academy) para dibujar ecuaciones LaTeX, copiado en
+   `vendor/katex/` (sin CDN). El evaluador de fórmulas es código propio.
 3. **Pensado para Chrome**: se edita cómodamente en computador (la impresión
    se hace desde ahí) y la interfaz también cabe en un teléfono.
 
@@ -33,6 +35,10 @@ Interfaz y comentarios del código en **español**.
     (`v*t`, `sqrt(2*h/g)`…) que calcula su texto. Se eligen redondeo y unidad.
   - Cualquier pregunta puede llevar una **imagen o diagrama** (ancho impreso
     en mm, a la derecha del texto o debajo).
+  - **Ecuaciones LaTeX** en enunciados, opciones e instrucciones: `$…$` en
+    línea y `$$…$$` en bloque (`dividirMatematicas` + `katex.renderToString`
+    en `js/util.js`; `\$` es un dólar literal). Fuera de las fórmulas sigue el
+    markup mínimo `^{}`, `_{}`, `**…**`.
   - Editor con vista previa "así se imprime" y tabla con el valor de cada
     opción en cada set; avisa de fórmulas inválidas, variables sin valor y
     opciones repetidas.
@@ -44,7 +50,9 @@ Interfaz y comentarios del código en **español**.
 - **Generar**: la forma A sale con las preguntas en orden aleatorio y la B con
   otro orden en el que ninguna pregunta repite posición; en cada pregunta las
   opciones se mezclan de forma distinta en A y B (la correcta cambia de letra)
-  y los problemas usan sets de datos distintos. El resultado se guarda con una
+  y los problemas usan sets de datos distintos. Dentro de cada forma, la letra
+  de la respuesta correcta se reparte: ninguna letra se repite más de lo
+  imprescindible (con 5 preguntas, como máximo dos veces). El resultado se guarda con una
   copia de las preguntas, así una prueba vieja se ve igual aunque el banco
   cambie después.
 - **Vista previa e impresión**: páginas a tamaño real, claves de ambas formas
@@ -74,11 +82,20 @@ prueba ocupa **media hoja A4 apaisada (210 × 148,5 mm) por las dos caras**.
   canvas no está disponible, con un cuadro negro superpuesto). El calificador
   exige F y aplica la clave del "Formato 1" o "Formato 2": basta con escribir
   allí las claves que muestra la vista previa.
+- Bajo la cabecera van directamente las instrucciones (si las hay) y las
+  preguntas; no se imprime título ni "Forma A/B" (la forma la indica la
+  casilla F). En la cara 2 puede ir una línea "Nombre" (desactivada por
+  defecto).
 - Las preguntas se reparten entre las dos caras midiendo el alto real de cada
-  una en la página (`paginarForma` en `js/vista.js`); se puede forzar cuántas
-  van en la cara 1. Si algo no cabe, la vista previa lo avisa.
+  una en la página (`paginarForma` en `js/vista.js`). Con **Distribuir en dos
+  caras** (por defecto) se elige el corte que deja un espacio por pregunta
+  parecido en ambas caras y el blanco sobrante se reparte por igual tras cada
+  pregunta; si se desactiva, la cara 1 se llena primero. Se puede forzar
+  cuántas preguntas van en la cara 1. Si algo no cabe, la vista previa lo
+  avisa. Antes de medir se esperan las imágenes y las fuentes (KaTeX).
 - Tipografía del papel: Arial/Helvetica (la de la plantilla original); tamaño
-  configurable (9–12 pt).
+  configurable de 9 a 18 pt (16 por defecto). Separador decimal: punto por
+  defecto.
 
 ## Archivos
 
@@ -96,6 +113,7 @@ prueba ocupa **media hoja A4 apaisada (210 × 148,5 mm) por las dos caras**.
 | `js/guardadas.js` | Pruebas guardadas, importar/exportar, copia de seguridad. |
 | `js/app.js` | Arranque, pestañas, modales, toasts, registro del service worker. |
 | `sw.js` | Service worker propio del generador (ámbito `generador/`): precarga los archivos, red primero con caché de respaldo. |
+| `vendor/katex/` | KaTeX 0.19.1 (`katex.min.js`, `katex.min.css`, fuentes woff2, LICENSE) tomado del paquete oficial de npm. Para actualizarlo: `npm pack katex@<versión>`, copiar `dist/katex.min.*` y `dist/fonts/*.woff2`, y subir `VERSION` en `sw.js`. |
 | `img/cabecera_v2.png` | Cabecera OMR v2 recortada (600 dpi). Si cambia la cabecera del calificador, regenerarla desde su `templates/cabecera_v2.pdf` y revisar `CABECERA` en `js/vista.js` (posición de las casillas F). |
 | `banco/ejemplos.json` | Preguntas de ejemplo (Física) en el formato de exportación del banco. |
 | `manifest.webmanifest`, `icons/` | Para instalar la página como app (Chrome → Instalar). |

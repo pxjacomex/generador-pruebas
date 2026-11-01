@@ -211,9 +211,73 @@ function sustituirVariables(texto, set, separador) {
   });
 }
 
-// Markup mínimo: **negrita**, ^{sup} / ^2, _{sub} / _0 y saltos de línea.
-// Primero se escapa el HTML, así el texto del profesor nunca se interpreta.
+// ============================================
+// ECUACIONES LaTeX: $…$ en línea y $$…$$ en bloque, dibujadas con KaTeX
+// (vendor/katex). "\$" es un signo de dólar literal.
+// ============================================
+// Divide el texto en tramos { tipo: 'texto' } y { tipo: 'tex', display }.
+// Un "$" solo abre fórmula si tiene cierre en la misma línea y el contenido
+// no empieza ni termina con espacio (así "$5 y $10" sigue siendo texto).
+function dividirMatematicas(texto) {
+  const s = String(texto == null ? '' : texto);
+  const partes = [];
+  let i = 0, inicioTexto = 0;
+  const cerrarTexto = (hasta) => { if (hasta > inicioTexto) partes.push({ tipo: 'texto', texto: s.slice(inicioTexto, hasta) }); };
+  while (i < s.length) {
+    const ch = s[i];
+    if (ch === '\\' && s[i + 1] === '$') {
+      cerrarTexto(i);
+      partes.push({ tipo: 'texto', texto: '$' });
+      i += 2; inicioTexto = i;
+      continue;
+    }
+    if (ch === '$') {
+      const bloque = s[i + 1] === '$';
+      const delim = bloque ? '$$' : '$';
+      const desde = i + delim.length;
+      let fin = -1;
+      for (let j = desde; j < s.length; j++) {
+        if (s[j] === '\\') { j++; continue; }
+        if (s.startsWith(delim, j)) { fin = j; break; }
+      }
+      const tex = fin >= 0 ? s.slice(desde, fin) : '';
+      const valida = fin >= 0 && tex.trim() !== ''
+        && (bloque || (!/^\s/.test(tex) && !/\s$/.test(tex) && tex.indexOf('\n') < 0));
+      if (valida) {
+        cerrarTexto(i);
+        partes.push({ tipo: 'tex', tex, display: bloque });
+        i = fin + delim.length; inicioTexto = i;
+        continue;
+      }
+    }
+    i++;
+  }
+  cerrarTexto(s.length);
+  return partes;
+}
+
+function renderTex(tex, display) {
+  const crudo = display ? '$$' + tex + '$$' : '$' + tex + '$';
+  if (typeof katex === 'undefined' || !katex.renderToString) {
+    return `<code class="tex-sin-motor" title="KaTeX no está cargado">${escapeHtml(crudo)}</code>`;
+  }
+  try {
+    return katex.renderToString(tex, { displayMode: !!display, throwOnError: false, strict: 'ignore', trust: false, output: 'html' });
+  } catch (e) {
+    return `<code class="tex-error" title="${escapeHtml(e && e.message || '')}">${escapeHtml(crudo)}</code>`;
+  }
+}
+
+// Texto del profesor → HTML: fórmulas con KaTeX y, en el resto, el markup
+// mínimo (**negrita**, ^{sup} / ^2, _{sub} / _0, saltos de línea).
 function textoEnriquecido(texto) {
+  return dividirMatematicas(texto)
+    .map((p) => (p.tipo === 'tex' ? renderTex(p.tex, p.display) : enriquecerTramo(p.texto)))
+    .join('');
+}
+
+// Primero se escapa el HTML, así el texto del profesor nunca se interpreta.
+function enriquecerTramo(texto) {
   let s = escapeHtml(texto);
   s = s.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
   s = s.replace(/\^\{([^}]*)\}/g, '<sup>$1</sup>');

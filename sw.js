@@ -6,10 +6,11 @@
  *  - Las peticiones del propio ámbito van primero a la red (así las versiones
  *    nuevas llegan enseguida) y, si no hay conexión, salen de la caché.
  *  - Las fuentes de Google se guardan la primera vez y se sirven desde caché.
+ *  - KaTeX y sus fuentes van en vendor/ y se precargan con el resto.
  */
 'use strict';
 
-const VERSION = 'v1';  // subir al añadir o quitar archivos de ASSETS
+const VERSION = 'v2';  // subir al añadir o quitar archivos de ASSETS (v2: KaTeX)
 const CACHE = 'generador-' + VERSION;
 const ASSETS = [
   './',
@@ -29,6 +30,29 @@ const ASSETS = [
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
+  // KaTeX (ecuaciones LaTeX), alojado en vendor/ para funcionar sin conexión
+  './vendor/katex/katex.min.js',
+  './vendor/katex/katex.min.css',
+  './vendor/katex/fonts/KaTeX_AMS-Regular.woff2',
+  './vendor/katex/fonts/KaTeX_Caligraphic-Bold.woff2',
+  './vendor/katex/fonts/KaTeX_Caligraphic-Regular.woff2',
+  './vendor/katex/fonts/KaTeX_Fraktur-Bold.woff2',
+  './vendor/katex/fonts/KaTeX_Fraktur-Regular.woff2',
+  './vendor/katex/fonts/KaTeX_Main-Bold.woff2',
+  './vendor/katex/fonts/KaTeX_Main-BoldItalic.woff2',
+  './vendor/katex/fonts/KaTeX_Main-Italic.woff2',
+  './vendor/katex/fonts/KaTeX_Main-Regular.woff2',
+  './vendor/katex/fonts/KaTeX_Math-BoldItalic.woff2',
+  './vendor/katex/fonts/KaTeX_Math-Italic.woff2',
+  './vendor/katex/fonts/KaTeX_SansSerif-Bold.woff2',
+  './vendor/katex/fonts/KaTeX_SansSerif-Italic.woff2',
+  './vendor/katex/fonts/KaTeX_SansSerif-Regular.woff2',
+  './vendor/katex/fonts/KaTeX_Script-Regular.woff2',
+  './vendor/katex/fonts/KaTeX_Size1-Regular.woff2',
+  './vendor/katex/fonts/KaTeX_Size2-Regular.woff2',
+  './vendor/katex/fonts/KaTeX_Size3-Regular.woff2',
+  './vendor/katex/fonts/KaTeX_Size4-Regular.woff2',
+  './vendor/katex/fonts/KaTeX_Typewriter-Regular.woff2',
 ];
 const FUENTES = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 const AMBITO = new URL('./', self.location.href).pathname;

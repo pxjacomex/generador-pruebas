@@ -109,6 +109,10 @@ Para cada pregunta, en la pestaña **Banco**:
   ancho impreso en mm y si va a la derecha del texto o debajo.
 - Símbolos como ², °, π, Δ están en los botones bajo el enunciado; `m/s^{2}`
   se imprime como m/s² y `v_{0}` como v₀.
+- **Ecuaciones:** escríbelas en LaTeX entre signos de dólar, por ejemplo
+  `$ax + by + c = 0$` o `$E_c = \tfrac{1}{2} m v^{2}$`; se dibujan en la vista
+  previa y en la impresión. El botón `$x²$` inserta los dólares. Para una
+  ecuación centrada en su propia línea usa `$$…$$`.
 
 Al terminar una sesión de trabajo, pulsa **⬇️ Exportar banco** y guarda el
 archivo `banco_preguntas_<fecha>.json` (ver paso 10).
@@ -139,7 +143,9 @@ posición en las dos formas.
 
 ## Paso 8 · Imprimir
 
-1. En **Vista previa**, deja la disposición *Hojas A4: dos pruebas por hoja*.
+1. En **Vista previa**, deja la disposición *Hojas A4: dos pruebas por hoja* y
+   la casilla *Distribuir en dos caras* marcada (las preguntas se reparten
+   entre las dos caras con el mismo espacio en blanco tras cada una).
 2. Pulsa **🖨️ Solo cara 1**. En el diálogo de Chrome: papel A4, escala 100 %
    (no "ajustar a la página"), márgenes "Ninguno" (o "Predeterminados").
    Imprime **una sola hoja** de prueba.

@@ -11,7 +11,14 @@ const ARMADO = {
 };
 
 function armarCargarBorrador() {
-  ARMADO.prueba = normalizarPrueba(lsLeer(LS_BORRADOR, null)) || nuevaPrueba();
+  const guardado = lsLeer(LS_BORRADOR, null);
+  ARMADO.prueba = normalizarPrueba(guardado) || nuevaPrueba();
+  // Borrador de una versión anterior (sin formas generadas): toma los nuevos
+  // valores por defecto (letra 16 pt, punto decimal, sin línea "Nombre").
+  if (guardado && !ARMADO.prueba.formas && !(guardado.opciones && guardado.opciones.v >= 2)) {
+    ['v', 'fuente_pt', 'separador', 'mostrar_nombre_cara2', 'distribuir_dos_caras'].forEach((k) => { ARMADO.prueba.opciones[k] = OPCIONES_PRUEBA_DEFAULT[k]; });
+    armarGuardarBorrador();
+  }
   armarRender();
 }
 
@@ -24,7 +31,7 @@ function armarGuardarBorrador() {
 function armarCampo(campo, valor) {
   const p = ARMADO.prueba;
   if (campo in p.opciones) {
-    if (campo === 'fuente_pt') p.opciones[campo] = clamp(parseFloat(valor) || 10, 8, 14);
+    if (campo === 'fuente_pt') p.opciones[campo] = clamp(parseFloat(valor) || OPCIONES_PRUEBA_DEFAULT.fuente_pt, FUENTE_PT_MIN, FUENTE_PT_MAX);
     else p.opciones[campo] = valor;
   } else {
     p[campo] = valor;
