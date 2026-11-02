@@ -27,7 +27,7 @@ async function initGenerador() {
   registrarServiceWorker();
 
   // Primera visita con el banco vacío: ofrecer los ejemplos
-  if (BANCO.preguntas.length === 0 && !lsLeer(LS_AJUSTES, {}).ejemplosOfrecidos) {
+  if (BANCO.todas.length === 0 && !lsLeer(LS_AJUSTES, {}).ejemplosOfrecidos) {
     lsEscribir(LS_AJUSTES, Object.assign(lsLeer(LS_AJUSTES, {}), { ejemplosOfrecidos: true }));
     const ok = await confirmar('El banco está vacío', '¿Cargar unas preguntas de ejemplo de Física para ver cómo funciona? Luego puedes borrarlas.');
     if (ok) await bancoCargarEjemplos();

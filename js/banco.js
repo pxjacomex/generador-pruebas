@@ -1,10 +1,16 @@
 // ============================================================================
 // PESTAÑA BANCO: lista de preguntas, editor y vista previa de cada pregunta.
-// El banco vive en IndexedDB (ver almacen.js) y en memoria en BANCO.preguntas.
+// El banco vive en IndexedDB (ver almacen.js). En memoria hay dos listas:
+//   BANCO.todas     → todo lo guardado en el dispositivo (la usan Armar y la
+//                     generación para resolver los ids de las preguntas).
+//   BANCO.preguntas → lo que se muestra en la lista y en el selector de
+//                     "Agregar del banco". "Limpiar vista" la vacía sin borrar
+//                     nada; "Recargar banco guardado" la vuelve a llenar.
 // ============================================================================
 'use strict';
 
 const BANCO = {
+  todas: [],
   preguntas: [],
   editando: null,      // copia de la pregunta en edición
   esNueva: false,
@@ -16,21 +22,55 @@ const BANCO = {
 async function bancoCargar() {
   try {
     const lista = await bdTodos(BD_PREGUNTAS);
-    BANCO.preguntas = lista.map(normalizarPregunta).filter(Boolean);
+    BANCO.todas = lista.map(normalizarPregunta).filter(Boolean);
   } catch (e) {
-    BANCO.preguntas = [];
+    BANCO.todas = [];
     toast('No se pudo abrir el banco de preguntas: ' + e.message, 'error');
   }
+  BANCO.preguntas = BANCO.todas.slice();
   bancoOrdenar();
   bancoRender();
 }
 
-function bancoOrdenar() {
-  BANCO.preguntas.sort((a, b) => (a.tema || '').localeCompare(b.tema || '', 'es') || (b.modificada || '').localeCompare(a.modificada || ''));
+function ordenarPreguntas(lista) {
+  lista.sort((a, b) => (a.tema || '').localeCompare(b.tema || '', 'es') || (b.modificada || '').localeCompare(a.modificada || ''));
 }
 
+function bancoOrdenar() {
+  ordenarPreguntas(BANCO.todas);
+  ordenarPreguntas(BANCO.preguntas);
+}
+
+// Mapa id → pregunta de TODO lo guardado (no solo lo que está en la vista).
 function bancoPorId() {
-  return new Map(BANCO.preguntas.map((p) => [p.id, p]));
+  return new Map(BANCO.todas.map((p) => [p.id, p]));
+}
+
+// Mete o reemplaza una pregunta en una lista en memoria.
+function colocarEnLista(lista, p) {
+  const i = lista.findIndex((q) => q.id === p.id);
+  if (i >= 0) lista[i] = p; else lista.push(p);
+}
+
+// Vacía la lista de la pestaña y el selector de Armar. No borra nada: las
+// preguntas siguen en el dispositivo (BANCO.todas) y vuelven con
+// bancoRecargarVista() o al recargar la página.
+function bancoLimpiarVista() {
+  if (BANCO.preguntas.length === 0) { toast('La vista ya está vacía', 'warn'); return; }
+  const n = BANCO.preguntas.length;
+  BANCO.preguntas = [];
+  BANCO.filtro = { texto: '', tema: '', tipo: '' };
+  document.getElementById('bancoBuscar').value = '';
+  document.getElementById('bancoTipo').value = '';
+  bancoRender();
+  toast(`Vista vaciada (${n} pregunta${n === 1 ? '' : 's'} quitada${n === 1 ? '' : 's'} de la vista; siguen guardadas)`);
+}
+
+function bancoRecargarVista() {
+  BANCO.preguntas = BANCO.todas.slice();
+  bancoOrdenar();
+  bancoRender();
+  toast(`Banco guardado recargado: ${BANCO.preguntas.length} preguntas`);
 }
 
 function bancoTemas() {
@@ -73,13 +113,19 @@ function bancoRender() {
   if (dl) dl.innerHTML = bancoTemas().map((t) => `<option value="${escapeHtml(t)}">`).join('');
 
   const lista = bancoFiltrar(BANCO.preguntas, BANCO.filtro);
-  document.getElementById('bancoInfo').textContent = BANCO.preguntas.length === 0
-    ? 'El banco está vacío. Crea una pregunta o carga las de ejemplo.'
-    : `${lista.length} de ${BANCO.preguntas.length} pregunta${BANCO.preguntas.length === 1 ? '' : 's'}`;
+  const nGuardadas = BANCO.todas.length;
+  const vistaParcial = BANCO.preguntas.length !== nGuardadas;
+  document.getElementById('bancoInfo').textContent = nGuardadas === 0
+    ? 'El banco está vacío. Crea una pregunta, importa un archivo o carga las de ejemplo.'
+    : `${lista.length} de ${BANCO.preguntas.length} en la vista · ${nGuardadas} guardada${nGuardadas === 1 ? '' : 's'} en este dispositivo`;
+  document.getElementById('btnBancoRecargar').classList.toggle('hidden', !vistaParcial);
+  document.getElementById('btnBancoLimpiar').classList.toggle('hidden', BANCO.preguntas.length === 0);
 
   const cont = document.getElementById('bancoItems');
   if (lista.length === 0) {
-    cont.innerHTML = BANCO.preguntas.length ? '<div class="card vacio">Ninguna pregunta coincide con el filtro.</div>' : '';
+    if (BANCO.preguntas.length) cont.innerHTML = '<div class="card vacio">Ninguna pregunta coincide con el filtro.</div>';
+    else if (nGuardadas) cont.innerHTML = `<div class="card vacio">La vista está vacía. Las ${nGuardadas} preguntas guardadas en este dispositivo no se han borrado: pulsa <b>Recargar banco guardado</b> para volver a verlas, o importa un archivo para ver solo sus preguntas.</div>`;
+    else cont.innerHTML = '';
     return;
   }
   const enPrueba = new Set((ARMADO.prueba ? ARMADO.prueba.items : []).map((it) => it.preguntaId));
@@ -148,6 +194,7 @@ async function bancoEliminar(id) {
   if (!ok) return;
   try {
     await bdEliminar(BD_PREGUNTAS, id);
+    BANCO.todas = BANCO.todas.filter((q) => q.id !== id);
     BANCO.preguntas = BANCO.preguntas.filter((q) => q.id !== id);
     bancoRender();
     if (typeof armarRender === 'function') armarRender();
@@ -163,8 +210,8 @@ function bancoVer(id) {
 async function bancoGuardarPregunta(p) {
   p.modificada = ahoraISO();
   await bdGuardar(BD_PREGUNTAS, p);
-  const i = BANCO.preguntas.findIndex((q) => q.id === p.id);
-  if (i >= 0) BANCO.preguntas[i] = p; else BANCO.preguntas.push(p);
+  colocarEnLista(BANCO.todas, p);
+  colocarEnLista(BANCO.preguntas, p);
   bancoOrdenar();
   bancoRender();
   if (typeof armarRender === 'function') armarRender();
@@ -179,6 +226,7 @@ function bancoExportar() {
 }
 
 // Fusiona una lista de preguntas: las que ya existen (mismo id) se actualizan.
+// Las importadas se añaden a la vista (si la vista estaba vacía, se ven solo ellas).
 async function bancoFusionar(lista, origen) {
   const porId = bancoPorId();
   let nuevas = 0, actualizadas = 0, invalidas = 0;
@@ -190,7 +238,10 @@ async function bancoFusionar(lista, origen) {
     aGuardar.push(p);
   });
   if (aGuardar.length) await bdGuardarVarios(BD_PREGUNTAS, aGuardar);
-  await bancoCargar();
+  aGuardar.forEach((p) => { colocarEnLista(BANCO.todas, p); colocarEnLista(BANCO.preguntas, p); });
+  bancoOrdenar();
+  bancoRender();
+  if (typeof armarRender === 'function') armarRender();
   toast(`${origen}: ${nuevas} nuevas, ${actualizadas} actualizadas${invalidas ? `, ${invalidas} descartadas` : ''}`);
 }
 

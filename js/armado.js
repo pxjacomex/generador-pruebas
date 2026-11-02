@@ -231,6 +231,7 @@ function armarAbrirSelector() {
   document.getElementById('selectorBuscar').value = '';
   const selTema = document.getElementById('selectorTema');
   selTema.innerHTML = '<option value="">Todos los temas</option>' + bancoTemas().map((t) => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+  document.getElementById('selectorTipo').value = '';
   selectorRender();
   abrirModal('modalSelector');
   setTimeout(() => document.getElementById('selectorBuscar').focus(), 50);
@@ -239,11 +240,13 @@ function armarAbrirSelector() {
 function selectorRender() {
   const cont = document.getElementById('selectorItems');
   if (!cont) return;
-  const filtro = { texto: document.getElementById('selectorBuscar').value, tema: document.getElementById('selectorTema').value, tipo: '' };
+  const filtro = { texto: document.getElementById('selectorBuscar').value, tema: document.getElementById('selectorTema').value, tipo: document.getElementById('selectorTipo').value };
   const lista = bancoFiltrar(BANCO.preguntas, filtro);
   const enPrueba = new Set(ARMADO.prueba.items.map((it) => it.preguntaId));
   if (BANCO.preguntas.length === 0) {
-    cont.innerHTML = '<div class="vacio">El banco está vacío. Crea preguntas en la pestaña Banco o carga las de ejemplo.</div>';
+    cont.innerHTML = BANCO.todas.length
+      ? '<div class="vacio">La vista del banco está vacía. En la pestaña Banco pulsa "Recargar banco guardado" o importa un archivo.</div>'
+      : '<div class="vacio">El banco está vacío. Crea preguntas en la pestaña Banco o carga las de ejemplo.</div>';
     return;
   }
   if (lista.length === 0) { cont.innerHTML = '<div class="vacio">Ninguna pregunta coincide.</div>'; return; }

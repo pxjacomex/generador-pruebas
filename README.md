@@ -44,9 +44,15 @@ Interfaz y comentarios del código en **español**.
     opciones repetidas.
   - Importar/exportar el banco como JSON; preguntas de ejemplo en
     `banco/ejemplos.json`.
+  - *Limpiar vista* vacía la lista en pantalla y el selector de Armar sin
+    borrar nada (`BANCO.preguntas` frente a `BANCO.todas`, que conserva todo
+    lo guardado para resolver los ids de las pruebas); *Recargar banco
+    guardado* la rellena, y una importación con la vista vacía muestra solo lo
+    importado.
 - **Armar**: título, curso, fecha, instrucciones, tamaño de letra; 5 preguntas
-  elegidas del banco (con vista previa antes de agregarlas); por problema, el
-  set de cada forma (al azar o fijo).
+  elegidas del banco con un selector que filtra por texto, tema y tipo y
+  muestra cada pregunta antes de agregarla; por problema, el set de cada
+  forma (al azar o fijo).
 - **Generar**: la forma A sale con las preguntas en orden aleatorio y la B con
   otro orden en el que ninguna pregunta repite posición; en cada pregunta las
   opciones se mezclan de forma distinta en A y B (la correcta cambia de letra)
