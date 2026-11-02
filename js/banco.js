@@ -77,13 +77,21 @@ function bancoTemas() {
   return Array.from(new Set(BANCO.preguntas.map((p) => p.tema.trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'es'));
 }
 
+function bancoEtiquetas() {
+  return Array.from(new Set(BANCO.todas.map((p) => (p.etiqueta || '').trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'es'));
+}
+
+function globoEtiqueta(p) {
+  return p.etiqueta ? `<span class="badge etiqueta" title="Etiqueta">🏷 ${escapeHtml(p.etiqueta)}</span>` : '';
+}
+
 function bancoFiltrar(preguntas, filtro) {
   const t = (filtro.texto || '').trim().toLowerCase();
   return preguntas.filter((p) => {
     if (filtro.tema && p.tema.trim() !== filtro.tema) return false;
     if (filtro.tipo && p.tipo !== filtro.tipo) return false;
     if (t) {
-      const pajar = (p.enunciado + ' ' + p.tema + ' ' + p.opciones.map((o) => o.texto + ' ' + o.formula).join(' ')).toLowerCase();
+      const pajar = (p.enunciado + ' ' + p.tema + ' ' + (p.etiqueta || '') + ' ' + p.opciones.map((o) => o.texto + ' ' + o.formula).join(' ')).toLowerCase();
       if (!pajar.includes(t)) return false;
     }
     return true;
@@ -111,6 +119,8 @@ function bancoRender() {
   // Datalist de temas para el editor
   const dl = document.getElementById('listaTemas');
   if (dl) dl.innerHTML = bancoTemas().map((t) => `<option value="${escapeHtml(t)}">`).join('');
+  const dle = document.getElementById('listaEtiquetas');
+  if (dle) dle.innerHTML = bancoEtiquetas().map((t) => `<option value="${escapeHtml(t)}">`).join('');
 
   const lista = bancoFiltrar(BANCO.preguntas, BANCO.filtro);
   const nGuardadas = BANCO.todas.length;
@@ -140,6 +150,7 @@ function bancoRender() {
         <div class="item-cuerpo">
           <div class="item-meta">
             ${p.tema ? `<span class="badge tema">${escapeHtml(p.tema)}</span>` : '<span class="badge">sin tema</span>'}
+            ${globoEtiqueta(p)}
             <span class="badge">${etiquetaTipo(p)}</span>
             ${estado}
             ${enPrueba.has(p.id) ? '<span class="badge ok">en la prueba</span>' : ''}
@@ -294,6 +305,7 @@ async function editorGuardar() {
   const p = BANCO.editando;
   if (!p) return;
   p.tema = p.tema.trim();
+  p.etiqueta = (p.etiqueta || '').trim();
   const rev = comprobarPregunta(p);
   if (!p.enunciado.trim()) { toast('Escribe el enunciado antes de guardar', 'error'); return; }
   try {
@@ -325,6 +337,10 @@ function editorRender() {
           <div class="form-group">
             <label>Tema (para filtrar el banco)</label>
             <input class="input" list="listaTemas" value="${escapeHtml(p.tema)}" oninput="editorCampo('tema', this.value)" placeholder="p. ej. Cinemática">
+          </div>
+          <div class="form-group">
+            <label>Etiqueta (opcional; se ve en las listas, no en la impresión)</label>
+            <input class="input" list="listaEtiquetas" maxlength="40" value="${escapeHtml(p.etiqueta || '')}" oninput="editorCampo('etiqueta', this.value)" placeholder="p. ej. fácil, control 2, ejemplo 4.3">
           </div>
           <div class="form-group">
             <label>Enunciado</label>
@@ -671,7 +687,7 @@ function mostrarVistaPregunta(pregunta, opts) {
   BANCO.modalPregunta = { pregunta, setIndice: 0, alAgregar: opts.alAgregar || null };
   const esCalc = pregunta.tipo === 'calculo';
   document.getElementById('modalPreguntaMeta').innerHTML =
-    (pregunta.tema ? `<span class="badge tema">${escapeHtml(pregunta.tema)}</span> ` : '') + `<span class="badge">${etiquetaTipo(pregunta)}</span>`;
+    (pregunta.tema ? `<span class="badge tema">${escapeHtml(pregunta.tema)}</span> ` : '') + globoEtiqueta(pregunta) + ` <span class="badge">${etiquetaTipo(pregunta)}</span>`;
   const sel = document.getElementById('modalPreguntaSet');
   sel.classList.toggle('hidden', !esCalc || pregunta.sets.length === 0);
   sel.innerHTML = pregunta.sets.map((_, i) => `<option value="${i}">Set ${i + 1}</option>`).join('');

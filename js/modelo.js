@@ -5,7 +5,7 @@
 // de las dos formas. Sin DOM.
 //
 // Pregunta del banco:
-//   { id, tema, tipo: 'fija'|'calculo', enunciado, imagen: null | { datos
+//   { id, tema, etiqueta (texto libre, solo en listas), tipo: 'fija'|'calculo', enunciado, imagen: null | { datos
 //     (data URL), ancho_mm, posicion: 'derecha'|'abajo', ancho_px, alto_px },
 //     mezclar: true, opciones: [{ texto, formula, correcta }] (siempre 4),
 //     variables: ['v','t'], sets: [{ v: '10', t: '5' }], formato: { modo,
@@ -50,6 +50,7 @@ function nuevaPregunta(tipo) {
   return {
     id: uid('q'),
     tema: '',
+    etiqueta: '',
     tipo: tipo === 'calculo' ? 'calculo' : 'fija',
     enunciado: '',
     imagen: null,
@@ -71,6 +72,7 @@ function normalizarPregunta(p) {
   const q = Object.assign(base, {
     id: (typeof p.id === 'string' && p.id) ? p.id : base.id,
     tema: String(p.tema || '').trim(),
+    etiqueta: String(p.etiqueta || '').trim(),
     tipo: p.tipo === 'calculo' ? 'calculo' : 'fija',
     enunciado: String(p.enunciado || ''),
     mezclar: p.mezclar !== false,
@@ -368,7 +370,7 @@ function generarFormas(prueba, preguntasPorId, semilla) {
   const snapshot = {};
   items.forEach(({ pregunta }) => {
     snapshot[pregunta.id] = {
-      id: pregunta.id, tema: pregunta.tema, tipo: pregunta.tipo,
+      id: pregunta.id, tema: pregunta.tema, etiqueta: pregunta.etiqueta || '', tipo: pregunta.tipo,
       enunciado: pregunta.enunciado, imagen: pregunta.imagen ? Object.assign({}, pregunta.imagen) : null,
       nSets: pregunta.tipo === 'calculo' ? pregunta.sets.length : 0,
     };

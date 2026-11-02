@@ -116,6 +116,7 @@ function armarRender() {
         <div class="item-cuerpo">
           <div class="item-meta">
             ${q.tema ? `<span class="badge tema">${escapeHtml(q.tema)}</span>` : ''}
+            ${globoEtiqueta(q)}
             <span class="badge">${etiquetaTipo(q)}</span>
             ${estado}
           </div>
@@ -259,6 +260,7 @@ function selectorRender() {
         <div class="item-cuerpo">
           <div class="item-meta">
             ${q.tema ? `<span class="badge tema">${escapeHtml(q.tema)}</span>` : ''}
+            ${globoEtiqueta(q)}
             <span class="badge">${etiquetaTipo(q)}</span>
             ${rev.errores.length ? '<span class="badge error">⚠ incompleta</span>' : ''}
             ${ya ? '<span class="badge ok">en la prueba</span>' : ''}

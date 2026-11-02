@@ -34,7 +34,9 @@ Interfaz y comentarios del código en **español**.
     varios **sets de datos** (filas de valores) y una **fórmula por opción**
     (`v*t`, `sqrt(2*h/g)`…) que calcula su texto. Se eligen redondeo y unidad.
   - Cualquier pregunta puede llevar una **imagen o diagrama** (ancho impreso
-    en mm, a la derecha del texto o debajo).
+    en mm, a la derecha del texto o debajo) y una **etiqueta** libre que solo
+    se muestra como globo en las listas (Banco, selector y Armar) y entra en
+    el buscador; nunca se imprime.
   - **Ecuaciones LaTeX** en enunciados, opciones e instrucciones: `$…$` en
     línea y `$$…$$` en bloque (`dividirMatematicas` + `katex.renderToString`
     en `js/util.js`; `\$` es un dólar literal). Fuera de las fórmulas sigue el
@@ -150,7 +152,7 @@ Pregunta (`preguntas` en IndexedDB y en los JSON exportados):
 
 ```json
 {
-  "id": "q_…", "tema": "Cinemática", "tipo": "calculo",
+  "id": "q_…", "tema": "Cinemática", "etiqueta": "control 2", "tipo": "calculo",
   "enunciado": "Un automóvil … {{v}} m/s durante {{t}} s …",
   "imagen": { "datos": "data:image/png;base64,…", "ancho_mm": 55, "posicion": "derecha", "ancho_px": 600, "alto_px": 400 },
   "mezclar": true,

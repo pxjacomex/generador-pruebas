@@ -152,6 +152,7 @@ textarea.input { resize: vertical; line-height: 1.4; min-height: 44px; }
   background: var(--bg-input); border: 1px solid var(--border); color: var(--text-dim); vertical-align: middle;
 }
 .badge.tema { color: var(--purple); border-color: rgba(111,56,201,0.35); background: #f2ecfd; }
+.badge.etiqueta { color: var(--info); border-color: rgba(31,102,199,0.35); background: #e8f0fc; }
 .badge.ok { color: var(--accent-text); border-color: rgba(11,143,88,0.35); background: #e4f8ee; }
 .badge.warn { color: var(--warn); border-color: rgba(168,100,0,0.35); background: var(--warn-bg); }
 .badge.error { color: var(--error); border-color: rgba(201,40,79,0.35); background: var(--error-bg); }
