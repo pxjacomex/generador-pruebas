@@ -328,9 +328,9 @@ function editorRender() {
           </div>
           <div class="form-group">
             <label>Enunciado</label>
-            <textarea class="input" id="editorEnunciado" rows="5" oninput="editorCampo('enunciado', this.value)" placeholder="${esCalc ? 'Un móvil parte del reposo con aceleración {a} m/s^{2} durante {t} s. ¿Qué distancia recorre?' : 'Escribe aquí la pregunta…'}">${escapeHtml(p.enunciado)}</textarea>
+            <textarea class="input" id="editorEnunciado" rows="5" oninput="editorCampo('enunciado', this.value)" placeholder="${esCalc ? 'Un móvil parte del reposo con aceleración {{a}} m/s^{2} durante {{t}} s. ¿Qué distancia recorre?' : 'Escribe aquí la pregunta…'}">${escapeHtml(p.enunciado)}</textarea>
             <div class="simbolos">${SIMBOLOS.map((s) => `<button type="button" onclick="editorInsertar('${s}')">${s}</button>`).join('')}<button type="button" class="latex" title="Insertar ecuación LaTeX" onclick="editorInsertarLatex()">$x²$</button></div>
-            <div class="field-note">${esCalc ? 'Escribe cada dato entre llaves con el nombre de su variable: <code>{v}</code>, <code>{t}</code>. ' : ''}Formato: <code>^{2}</code> superíndice, <code>_{0}</code> subíndice, <code>**negrita**</code>. Ecuaciones LaTeX entre dólares: <code>$ax + by + c = 0$</code> (ver Ayuda).</div>
+            <div class="field-note">${esCalc ? 'Escribe cada dato entre llaves dobles con el nombre de su variable: <code>{{v}}</code>, <code>{{t}}</code> (también dentro de una fórmula: <code>$v = {{v}}\\ \\mathrm{m/s}$</code>). ' : ''}Formato: <code>^{2}</code> superíndice, <code>_{0}</code> subíndice, <code>**negrita**</code>. Ecuaciones LaTeX entre dólares: <code>$ax + by + c = 0$</code> (ver Ayuda).</div>
           </div>
           <div class="form-group">
             <label>Imagen o diagrama (opcional)</label>

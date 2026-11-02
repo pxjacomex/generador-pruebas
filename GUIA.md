@@ -92,8 +92,9 @@ Para cada pregunta, en la pestaña **Banco**:
   correcta marcada. Si una opción debe quedar siempre al final ("Todas las
   anteriores"), desmarca *Mezclar el orden de las opciones*.
 - **Problema con datos:**
-  1. Escribe el enunciado con cada dato entre llaves: `Un auto viaja a {v} m/s
-     durante {t} s`.
+  1. Escribe el enunciado con cada dato entre llaves dobles: `Un auto viaja a
+     {{v}} m/s durante {{t}} s`. También sirven dentro de una fórmula:
+     `$v = {{v}}\ \mathrm{m/s}$`.
   2. En *Datos del enunciado*, pon el nombre de cada variable en la cabecera
      (`v`, `t`) y una fila por set de datos. Con **＋ Set de datos** añades
      filas; con **⧉** duplicas una para cambiar solo un valor. Conviene tener

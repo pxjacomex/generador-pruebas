@@ -30,7 +30,7 @@ Interfaz y comentarios del código en **español**.
 
 - **Banco de preguntas** con dos tipos:
   - *Opciones fijas*: cuatro alternativas de texto, una correcta.
-  - *Problema con datos*: el enunciado lleva variables (`{v}`, `{t}`…),
+  - *Problema con datos*: el enunciado lleva variables (`{{v}}`, `{{t}}`…),
     varios **sets de datos** (filas de valores) y una **fórmula por opción**
     (`v*t`, `sqrt(2*h/g)`…) que calcula su texto. Se eligen redondeo y unidad.
   - Cualquier pregunta puede llevar una **imagen o diagrama** (ancho impreso
@@ -38,7 +38,10 @@ Interfaz y comentarios del código en **español**.
   - **Ecuaciones LaTeX** en enunciados, opciones e instrucciones: `$…$` en
     línea y `$$…$$` en bloque (`dividirMatematicas` + `katex.renderToString`
     en `js/util.js`; `\$` es un dólar literal). Fuera de las fórmulas sigue el
-    markup mínimo `^{}`, `_{}`, `**…**`.
+    markup mínimo `^{}`, `_{}`, `**…**`. Las variables van con llaves dobles,
+    `{{v}}`, dentro y fuera de las fórmulas (las simples son grupos de LaTeX);
+    el marcador antiguo `{v}` se acepta solo fuera de las fórmulas y
+    `normalizarPregunta` migra las preguntas guardadas (`migrarMarcadores`).
   - Editor con vista previa "así se imprime" y tabla con el valor de cada
     opción en cada set; avisa de fórmulas inválidas, variables sin valor y
     opciones repetidas.
@@ -148,7 +151,7 @@ Pregunta (`preguntas` en IndexedDB y en los JSON exportados):
 ```json
 {
   "id": "q_…", "tema": "Cinemática", "tipo": "calculo",
-  "enunciado": "Un automóvil … {v} m/s durante {t} s …",
+  "enunciado": "Un automóvil … {{v}} m/s durante {{t}} s …",
   "imagen": { "datos": "data:image/png;base64,…", "ancho_mm": 55, "posicion": "derecha", "ancho_px": 600, "alto_px": 400 },
   "mezclar": true,
   "opciones": [ { "texto": "", "formula": "v*t", "correcta": true }, { "texto": "", "formula": "v/t", "correcta": false }, … ],

@@ -190,47 +190,80 @@ function formatearDato(valor, separador) {
 }
 
 // ============================================
-// TEXTO ENRIQUECIDO DE ENUNCIADOS Y OPCIONES
+// VARIABLES DE LOS PROBLEMAS: {{nombre}}
 // ============================================
-// Nombres de variable entre llaves: {v}, {t_0}, {masa}
-const RE_VARIABLE = /\{([A-Za-zÀ-ɏͰ-Ͽ_][A-Za-z0-9À-ɏͰ-Ͽ_]*)\}/g;
+// El marcador es {{v}} y vale dentro y fuera de las fórmulas LaTeX. El antiguo
+// {v} se sigue aceptando solo FUERA de las fórmulas (dentro chocaría con los
+// grupos {…} de LaTeX, como \vec{F} o E_{c}); normalizarPregunta migra las
+// preguntas guardadas a {{v}}.
+const NOMBRE_VAR = '[A-Za-z\\u00C0-\\u024F\\u0370-\\u03FF_][A-Za-z0-9\\u00C0-\\u024F\\u0370-\\u03FF_]*';
+const RE_VAR_DOBLE = new RegExp('\\{\\{\\s*(' + NOMBRE_VAR + ')\\s*\\}\\}', 'g');
+const RE_VAR_SIMPLE = new RegExp('(?<!\\{)\\{(' + NOMBRE_VAR + ')\\}(?!\\})', 'g');
 
+function escapeRegExp(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+// Nombres de variable que usa un texto ({{v}} en cualquier parte; {v} solo fuera de fórmulas).
 function variablesEnTexto(texto) {
   const set = new Set();
-  String(texto || '').replace(RE_VARIABLE, (_, n) => { set.add(n); return _; });
+  segmentarMatematicas(texto).forEach((seg) => {
+    seg.crudo.replace(RE_VAR_DOBLE, (orig, n) => { set.add(n); return orig; });
+    if (seg.tipo === 'texto') seg.crudo.replace(RE_VAR_SIMPLE, (orig, n) => { set.add(n); return orig; });
+  });
   return Array.from(set);
 }
 
-// Sustituye {variable} por el valor del set. Las variables que falten quedan
-// como están (el editor las avisa).
+// Sustituye los marcadores por el valor del set. Los que no tengan valor
+// quedan como están (el editor los avisa). Dentro de una fórmula, la coma
+// decimal va como {,} para que LaTeX no deje un espacio tras ella.
 function sustituirVariables(texto, set, separador) {
   set = set || {};
-  return String(texto || '').replace(RE_VARIABLE, (orig, nombre) => {
-    if (!(nombre in set) || set[nombre] === '' || set[nombre] == null) return orig;
-    return formatearDato(set[nombre], separador);
-  });
+  const valorDe = (nombre, enFormula) => {
+    if (!(nombre in set) || set[nombre] === '' || set[nombre] == null) return null;
+    let v = formatearDato(set[nombre], separador);
+    if (enFormula && (separador || ',') === ',') v = v.replace(/(\d),(\d)/g, '$1{,}$2');
+    return v;
+  };
+  return segmentarMatematicas(texto).map((seg) => {
+    const enFormula = seg.tipo === 'tex';
+    let t = seg.crudo.replace(RE_VAR_DOBLE, (orig, n) => { const v = valorDe(n, enFormula); return v == null ? orig : v; });
+    if (!enFormula) t = t.replace(RE_VAR_SIMPLE, (orig, n) => { const v = valorDe(n, false); return v == null ? orig : v; });
+    return t;
+  }).join('');
+}
+
+// Antiguo {v} → {{v}} para los nombres indicados (idempotente: no toca {{v}}).
+// Dentro de una fórmula solo se migran los grupos sueltos ("x = {v} t"); los
+// que son argumento de LaTeX (\vec{v}, E_{v}, \frac{d}{v}) se dejan como están.
+function migrarMarcadores(texto, nombres) {
+  if (!nombres || !nombres.length) return String(texto == null ? '' : texto);
+  return segmentarMatematicas(texto).map((seg) => {
+    let t = seg.crudo;
+    nombres.forEach((v) => {
+      const re = seg.tipo === 'tex'
+        ? new RegExp('(?<![A-Za-z_^}\\\\{])\\{' + escapeRegExp(v) + '\\}(?!\\})', 'g')
+        : new RegExp('(?<!\\{)\\{' + escapeRegExp(v) + '\\}(?!\\})', 'g');
+      t = t.replace(re, '{{' + v + '}}');
+    });
+    return t;
+  }).join('');
 }
 
 // ============================================
 // ECUACIONES LaTeX: $…$ en línea y $$…$$ en bloque, dibujadas con KaTeX
 // (vendor/katex). "\$" es un signo de dólar literal.
 // ============================================
-// Divide el texto en tramos { tipo: 'texto' } y { tipo: 'tex', display }.
+// Divide el texto en tramos crudos { tipo: 'texto', crudo } y
+// { tipo: 'tex', crudo, tex, display } conservando el original (incluido "\$").
 // Un "$" solo abre fórmula si tiene cierre en la misma línea y el contenido
 // no empieza ni termina con espacio (así "$5 y $10" sigue siendo texto).
-function dividirMatematicas(texto) {
+function segmentarMatematicas(texto) {
   const s = String(texto == null ? '' : texto);
   const partes = [];
   let i = 0, inicioTexto = 0;
-  const cerrarTexto = (hasta) => { if (hasta > inicioTexto) partes.push({ tipo: 'texto', texto: s.slice(inicioTexto, hasta) }); };
+  const cerrarTexto = (hasta) => { if (hasta > inicioTexto) partes.push({ tipo: 'texto', crudo: s.slice(inicioTexto, hasta) }); };
   while (i < s.length) {
     const ch = s[i];
-    if (ch === '\\' && s[i + 1] === '$') {
-      cerrarTexto(i);
-      partes.push({ tipo: 'texto', texto: '$' });
-      i += 2; inicioTexto = i;
-      continue;
-    }
+    if (ch === '\\' && s[i + 1] === '$') { i += 2; continue; }   // dólar literal: sigue siendo texto
     if (ch === '$') {
       const bloque = s[i + 1] === '$';
       const delim = bloque ? '$$' : '$';
@@ -245,7 +278,7 @@ function dividirMatematicas(texto) {
         && (bloque || (!/^\s/.test(tex) && !/\s$/.test(tex) && tex.indexOf('\n') < 0));
       if (valida) {
         cerrarTexto(i);
-        partes.push({ tipo: 'tex', tex, display: bloque });
+        partes.push({ tipo: 'tex', crudo: s.slice(i, fin + delim.length), tex, display: bloque });
         i = fin + delim.length; inicioTexto = i;
         continue;
       }
@@ -254,6 +287,13 @@ function dividirMatematicas(texto) {
   }
   cerrarTexto(s.length);
   return partes;
+}
+
+// Tramos listos para dibujar: en el texto, "\$" pasa a ser "$".
+function dividirMatematicas(texto) {
+  return segmentarMatematicas(texto).map((seg) => (seg.tipo === 'tex'
+    ? { tipo: 'tex', tex: seg.tex, display: seg.display }
+    : { tipo: 'texto', texto: seg.crudo.replace(/\\\$/g, '$') }));
 }
 
 function renderTex(tex, display) {

@@ -27,6 +27,8 @@ cambiar algo.
 - Scripts clásicos con ámbito global; orden de carga: `vendor/katex` →
   `util` → `formulas` → `almacen` → `modelo` → `vista` → `banco` → `armado` →
   `guardadas` → `app`.
+- Variables de los problemas: `{{v}}` (llaves dobles, también dentro de `$…$`);
+  `{v}` solo se acepta fuera de las fórmulas por compatibilidad.
 - `modelo.js` y `formulas.js` no tocan el DOM. `vista.js` dibuja páginas y
   preguntas (`nodoPregunta`, compartido con el editor y el selector).
 - Los datos viven en IndexedDB (`generador-omr`) y el borrador en localStorage;

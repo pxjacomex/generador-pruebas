@@ -55,7 +55,7 @@ function nuevaPregunta(tipo) {
     imagen: null,
     mezclar: true,
     opciones: MODELO.LETRAS.map((_, i) => ({ texto: '', formula: '', correcta: i === 0 })),
-    variables: tipo === 'calculo' ? ['v', 't'] : [],
+    variables: tipo === 'calculo' ? ['v', 't'] : [],   // se escriben {{v}} y {{t}} en el enunciado
     sets: tipo === 'calculo' ? [{ v: '', t: '' }, { v: '', t: '' }] : [],
     formato: { modo: 'auto', decimales: 2, unidad: '' },
     creada: ahora,
@@ -93,6 +93,11 @@ function normalizarPregunta(p) {
     return limpio;
   });
   if (q.tipo === 'fija') { q.variables = []; q.sets = []; }
+  // Marcador antiguo {v} → {{v}} (solo para las variables declaradas; idempotente)
+  if (q.tipo === 'calculo' && q.variables.length) {
+    q.enunciado = migrarMarcadores(q.enunciado, q.variables);
+    q.opciones.forEach((o) => { o.texto = migrarMarcadores(o.texto, q.variables); });
+  }
   // Formato numérico
   const f = p.formato || {};
   q.formato = {
@@ -131,7 +136,7 @@ function validarPregunta(p) {
       if (!String(o.formula || '').trim() && !String(o.texto || '').trim()) errores.push(`La opción ${MODELO.LETRAS[i]} no tiene fórmula ni texto.`);
     });
     const faltan = variablesEnTexto(p.enunciado).filter((v) => !p.variables.includes(v));
-    if (faltan.length) errores.push('El enunciado usa variables que no existen: ' + faltan.map((v) => '{' + v + '}').join(', '));
+    if (faltan.length) errores.push('El enunciado usa variables que no existen: ' + faltan.map((v) => '{{' + v + '}}').join(', '));
   }
   if (!p.opciones.some((o) => o.correcta)) errores.push('Marca la opción correcta.');
   return errores;
@@ -154,7 +159,7 @@ function resolverPregunta(p, setIndice, separador) {
     if (idx < 0) res.errores.push('La pregunta no tiene sets de datos.');
     res.enunciado = sustituirVariables(p.enunciado, set, separador);
     const faltan = variablesEnTexto(res.enunciado);
-    if (faltan.length) res.errores.push('Sin valor en este set: ' + faltan.map((v) => '{' + v + '}').join(', '));
+    if (faltan.length) res.errores.push('Sin valor en este set: ' + faltan.map((v) => '{{' + v + '}}').join(', '));
     res.opciones = p.opciones.map((o, i) => {
       const letra = MODELO.LETRAS[i];
       const formula = String(o.formula || '').trim();

@@ -8,7 +8,7 @@
    "id": "q_ej_mru_dist",
    "tema": "Cinemática",
    "tipo": "calculo",
-   "enunciado": "Un automóvil se mueve en línea recta con rapidez constante de {v} m/s durante {t} s. ¿Qué distancia recorre en ese tiempo?",
+   "enunciado": "Un automóvil se mueve en línea recta con rapidez constante de {{v}} m/s durante {{t}} s. ¿Qué distancia recorre en ese tiempo?",
    "imagen": null,
    "mezclar": true,
    "opciones": [
@@ -67,7 +67,7 @@
    "id": "q_ej_caida_libre",
    "tema": "Cinemática",
    "tipo": "calculo",
-   "enunciado": "Se deja caer una piedra desde el reposo a una altura de {h} m. Si g = 10 m/s^{2} y se desprecia el roce con el aire, ¿cuánto tarda en llegar al suelo?",
+   "enunciado": "Se deja caer una piedra desde el reposo a una altura de {{h}} m. Si g = 10 m/s^{2} y se desprecia el roce con el aire, ¿cuánto tarda en llegar al suelo?",
    "imagen": null,
    "mezclar": true,
    "opciones": [
@@ -205,7 +205,7 @@
    "id": "q_ej_newton2",
    "tema": "Dinámica",
    "tipo": "calculo",
-   "enunciado": "Sobre un cuerpo de masa {m} kg actúa una fuerza neta de {F} N. ¿Cuál es la aceleración que adquiere?",
+   "enunciado": "Sobre un cuerpo de masa {{m}} kg actúa una fuerza neta de {{F}} N. ¿Cuál es la aceleración que adquiere?",
    "imagen": null,
    "mezclar": true,
    "opciones": [
@@ -264,7 +264,7 @@
    "id": "q_ej_plano_inclinado",
    "tema": "Dinámica",
    "tipo": "calculo",
-   "enunciado": "Un bloque de masa {m} kg está apoyado sobre un plano inclinado sin roce que forma un ángulo de {ang}° con la horizontal (ver figura). Con g = 10 m/s^{2}, ¿cuál es el módulo de la componente del peso paralela al plano?",
+   "enunciado": "Un bloque de masa {{m}} kg está apoyado sobre un plano inclinado sin roce que forma un ángulo de {{ang}}° con la horizontal (ver figura). Con g = 10 m/s^{2}, ¿cuál es el módulo de la componente del peso paralela al plano?",
    "imagen": {
     "datos": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMTkwIiB2aWV3Qm94PSIwIDAgMzAwIDE5MCIgZm9udC1mYW1pbHk9IkFyaWFsLCBIZWx2ZXRpY2EsIHNhbnMtc2VyaWYiPgo8cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE5MCIgZmlsbD0iI2ZmZiIvPgo8cG9seWdvbiBwb2ludHM9IjIwLDE3MCAyODAsMTcwIDI4MCw1MCIgZmlsbD0iI2U4ZThlOCIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjIiLz4KPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTUwLDExMCkgcm90YXRlKC0yNC44KSI+CjxyZWN0IHg9Ii0yNSIgeT0iLTMwIiB3aWR0aD0iNTAiIGhlaWdodD0iMzAiIGZpbGw9IiNmZmQ1NGYiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIyIi8+Cjx0ZXh0IHg9Ii04IiB5PSItMTAiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSJib2xkIj5tPC90ZXh0Pgo8L2c+CjxwYXRoIGQ9Ik0gNjAgMTcwIEEgNDAgNDAgMCAwIDAgNTYgMTUyIiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMS41Ii8+Cjx0ZXh0IHg9IjY0IiB5PSIxNjAiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtc3R5bGU9Iml0YWxpYyI+zrg8L3RleHQ+CjxsaW5lIHgxPSIxNTAiIHkxPSI4OCIgeDI9IjE1MCIgeTI9IjE0MCIgc3Ryb2tlPSIjYzYyODI4IiBzdHJva2Utd2lkdGg9IjIuNSIvPgo8cG9seWdvbiBwb2ludHM9IjE1MCwxNDYgMTQ1LDEzNiAxNTUsMTM2IiBmaWxsPSIjYzYyODI4Ii8+Cjx0ZXh0IHg9IjE1NiIgeT0iMTQyIiBmb250LXNpemU9IjEzIiBmaWxsPSIjYzYyODI4IiBmb250LXN0eWxlPSJpdGFsaWMiPm1nPC90ZXh0Pgo8L3N2Zz4=",
     "ancho_mm": 48,
@@ -329,7 +329,7 @@
    "id": "q_ej_energia_cinetica",
    "tema": "Energía",
    "tipo": "calculo",
-   "enunciado": "Calcula la energía cinética de un cuerpo de {m} kg que se mueve con una rapidez de {v} m/s.",
+   "enunciado": "Calcula la energía cinética de un cuerpo de {{m}} kg que se mueve con una rapidez de {{v}} m/s.",
    "imagen": null,
    "mezclar": true,
    "opciones": [
@@ -388,7 +388,7 @@
    "id": "q_ej_ohm",
    "tema": "Electricidad",
    "tipo": "calculo",
-   "enunciado": "En el circuito de la figura, la pila entrega {V} V y la resistencia es de {R} Ω. ¿Qué corriente circula por el circuito?",
+   "enunciado": "En el circuito de la figura, la pila entrega {{V}} V y la resistencia es de {{R}} Ω. ¿Qué corriente circula por el circuito?",
    "imagen": {
     "datos": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMTgwIiB2aWV3Qm94PSIwIDAgMzAwIDE4MCIgZm9udC1mYW1pbHk9IkFyaWFsLCBIZWx2ZXRpY2EsIHNhbnMtc2VyaWYiPgo8cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE4MCIgZmlsbD0iI2ZmZiIvPgo8cGF0aCBkPSJNIDYwIDQwIEggMTIwIE0gMTgwIDQwIEggMjQwIFYgMTQwIEggNjAgViA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjIiLz4KPHBhdGggZD0iTSAxMjAgNDAgbCA2IC0xMCBsIDEyIDIwIGwgMTIgLTIwIGwgMTIgMjAgbCAxMiAtMjAgbCA2IDEwIiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMiIvPgo8dGV4dCB4PSIxMzgiIHk9IjIyIiBmb250LXNpemU9IjE0IiBmb250LXN0eWxlPSJpdGFsaWMiPlI8L3RleHQ+CjxsaW5lIHgxPSI0MCIgeTE9IjkwIiB4Mj0iODAiIHkyPSI5MCIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjYiLz4KPGxpbmUgeDE9IjYwIiB5MT0iNzAiIHgyPSI2MCIgeTI9Ijc4IiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMiIvPgo8bGluZSB4MT0iNDgiIHkxPSI4MCIgeDI9IjcyIiB5Mj0iODAiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIzIi8+CjxsaW5lIHgxPSI1NCIgeTE9Ijg4IiB4Mj0iNjYiIHkyPSI4OCIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjIiLz4KPGxpbmUgeDE9IjYwIiB5MT0iOTAiIHgyPSI2MCIgeTI9Ijk4IiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMiIvPgo8dGV4dCB4PSIyMCIgeT0iOTAiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtc3R5bGU9Iml0YWxpYyI+VjwvdGV4dD4KPHBvbHlnb24gcG9pbnRzPSIyMDAsMTM2IDE5MCwxMzEgMTkwLDE0MSIgZmlsbD0iIzAwMCIvPgo8dGV4dCB4PSIxOTYiIHk9IjE2MCIgZm9udC1zaXplPSIxMyIgZm9udC1zdHlsZT0iaXRhbGljIj5JPC90ZXh0Pgo8L3N2Zz4=",
     "ancho_mm": 46,
