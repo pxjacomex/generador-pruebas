@@ -74,18 +74,22 @@ prueba ocupa **media hoja A4 apaisada (210 × 148,5 mm) por las dos caras**.
   para seguir usando "2 páginas por hoja" del diálogo de impresión.
 - La cabecera OMR (`img/cabecera_v2.png`, recorte de `templates/cabecera_v2.pdf`
   del repositorio del calificador a 600 dpi, 210 × 23,5 mm de página) se imprime a
-  198 mm de ancho (ajustable), con los marcadores a ≈9 mm del borde del papel.
-  El calificador solo usa proporciones relativas a los marcadores, así que la
-  reducción no le afecta.
+  206 mm de ancho (`CABECERA_ANCHO_MM`), centrada y saliéndose de los márgenes
+  de `.cara` con márgenes negativos: como la imagen lleva 3,6 mm de blanco a
+  los lados y 2,1 mm arriba, la tinta queda a ≈5,5 mm de los bordes laterales
+  del papel y a ≈6,1 mm del superior. Su borde inferior está fijo a ≈27,2 mm
+  del borde superior de la media hoja (`CABECERA_FONDO_MM`). El calificador
+  solo usa proporciones relativas a los marcadores, así que la escala no le
+  afecta.
 - **Casilla F**: con "Imprimir la casilla F ya marcada", la forma A lleva F = 1
   y la B F = 2 pintadas (se dibujan sobre la imagen con un canvas; si el
   canvas no está disponible, con un cuadro negro superpuesto). El calificador
   exige F y aplica la clave del "Formato 1" o "Formato 2": basta con escribir
   allí las claves que muestra la vista previa.
-- Bajo la cabecera van directamente las instrucciones (si las hay) y las
-  preguntas; no se imprime título ni "Forma A/B" (la forma la indica la
-  casilla F). En la cara 2 puede ir una línea "Nombre" (desactivada por
-  defecto).
+- Bajo la cabecera van directamente las instrucciones (si las hay; vacías por
+  defecto) y las preguntas; no se imprime título ni "Forma A/B" (la forma la
+  indica la casilla F). En la cara 2 puede ir una línea "Nombre" (desactivada
+  por defecto).
 - Las preguntas se reparten entre las dos caras midiendo el alto real de cada
   una en la página (`paginarForma` en `js/vista.js`). Con **Distribuir en dos
   caras** (por defecto) se elige el corte que deja un espacio por pregunta
@@ -93,8 +97,14 @@ prueba ocupa **media hoja A4 apaisada (210 × 148,5 mm) por las dos caras**.
   pregunta; si se desactiva, la cara 1 se llena primero. Se puede forzar
   cuántas preguntas van en la cara 1. Si algo no cabe, la vista previa lo
   avisa. Antes de medir se esperan las imágenes y las fuentes (KaTeX).
+- **Espacio para cálculos por pregunta**: junto a cada media hoja, un panel
+  con botones −/+ (pasos de 5 mm) y un candado por pregunta. El espacio libre
+  de la cara se reparte según `prueba.espacios[forma][numero] = { frac,
+  bloqueado }` (fracciones que suman 1 por cara; por defecto iguales); al
+  mover una pregunta, la diferencia la absorben las no bloqueadas de esa cara.
+  Se guarda con la prueba y se reinicia al volver a mezclar.
 - Tipografía del papel: Arial/Helvetica (la de la plantilla original); tamaño
-  configurable de 9 a 18 pt (16 por defecto). Separador decimal: punto por
+  configurable de 9 a 18 pt (12 por defecto). Separador decimal: punto por
   defecto.
 
 ## Archivos
@@ -144,7 +154,7 @@ Pregunta (`preguntas` en IndexedDB y en los JSON exportados):
 
 Prueba: `{ id, titulo, curso, fecha, instrucciones, opciones: {…}, items:
 [{ preguntaId, setA, setB }], formas: { semilla, generada, A, B, snapshot,
-avisos } }`. Cada forma tiene `items: [{ numero, preguntaId, setIndice,
+avisos }, espacios: { A: { 1: { frac, bloqueado }, … }, B: {…} } }`. Cada forma tiene `items: [{ numero, preguntaId, setIndice,
 enunciado, opciones: [{ texto, correcta }], correcta }]` y `clave`.
 
 ## Probar en local

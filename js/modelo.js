@@ -25,10 +25,13 @@ const MODELO = {
   RE_NOMBRE_VARIABLE: /^[A-Za-z\u00C0-\u024F\u0370-\u03FF_][A-Za-z0-9\u00C0-\u024F\u0370-\u03FF_]*$/,
 };
 
+// Texto de instrucciones que traían por defecto las versiones anteriores (se
+// vacía al migrar un borrador antiguo).
+const INSTRUCCIONES_ANTERIORES = 'Marca en la cabecera, rellenando todo el cuadro, la única alternativa correcta de cada pregunta.';
+
 const OPCIONES_PRUEBA_DEFAULT = {
-  v: 2,                     // versión de estos valores por defecto (migración del borrador)
-  fuente_pt: 16,            // tamaño de letra del cuerpo (puntos)
-  ancho_cabecera_mm: 198,   // ancho impreso de la cabecera OMR
+  v: 3,                     // versión de estos valores por defecto (migración del borrador)
+  fuente_pt: 12,            // tamaño de letra del cuerpo (puntos)
   marcar_F: true,           // imprimir la casilla F ya pintada (A→1, B→2)
   separador: '.',           // separador decimal de los números
   disposicion: 'a4',        // 'a4': dos pruebas por hoja A4; 'a5': páginas sueltas
@@ -210,10 +213,11 @@ function nuevaPrueba() {
     titulo: '',
     curso: '',
     fecha: '',
-    instrucciones: 'Marca en la cabecera, rellenando todo el cuadro, la única alternativa correcta de cada pregunta.',
+    instrucciones: '',
     opciones: Object.assign({}, OPCIONES_PRUEBA_DEFAULT),
     items: [],
     formas: null,
+    espacios: null,   // espacio en blanco tras cada pregunta, por forma (ver vista.js)
     creada: ahora,
     modificada: ahora,
   };
@@ -235,11 +239,12 @@ function normalizarPrueba(p) {
       setB: it.setB === 'auto' || it.setB == null ? 'auto' : parseInt(it.setB, 10),
     })),
     formas: (p.formas && typeof p.formas === 'object' && p.formas.A && p.formas.B) ? p.formas : null,
+    espacios: (p.espacios && typeof p.espacios === 'object') ? p.espacios : null,
     creada: p.creada || base.creada,
     modificada: p.modificada || base.modificada,
   });
   t.opciones.fuente_pt = clamp(parseFloat(t.opciones.fuente_pt) || OPCIONES_PRUEBA_DEFAULT.fuente_pt, FUENTE_PT_MIN, FUENTE_PT_MAX);
-  t.opciones.ancho_cabecera_mm = clamp(parseFloat(t.opciones.ancho_cabecera_mm) || 198, 150, 200);
+  delete t.opciones.ancho_cabecera_mm;   // ahora es una constante (CABECERA_ANCHO_MM en vista.js)
   t.opciones.separador = t.opciones.separador === ',' ? ',' : '.';
   t.opciones.disposicion = t.opciones.disposicion === 'a5' ? 'a5' : 'a4';
   return t;

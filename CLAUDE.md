@@ -36,8 +36,10 @@ cambiar algo.
 
 - `img/cabecera_v2.png` y `CABECERA` en `js/vista.js` (posición de las casillas
   F): deben coincidir con la cabecera v2 del calificador.
-- Ancho impreso de la cabecera (198 mm) y márgenes de `.cara`: los marcadores
-  deben quedar a ≥ 9 mm del borde del papel.
+- Ancho impreso de la cabecera (`CABECERA_ANCHO_MM` = 206 mm, con el borde
+  inferior fijo en `CABECERA_FONDO_MM`) y márgenes de `.cara`: la tinta de los
+  marcadores debe quedar a ≥ 5 mm del borde del papel (hoy ≈5,5 mm a los lados
+  y ≈6,1 mm arriba).
 
 ## Probar en local
 

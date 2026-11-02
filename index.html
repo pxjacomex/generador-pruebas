@@ -99,7 +99,7 @@
     </div>
     <div class="form-group">
       <label for="pruebaInstrucciones">Instrucciones (bajo la cabecera)</label>
-      <textarea class="input" id="pruebaInstrucciones" rows="2" oninput="armarCampo('instrucciones', this.value)"></textarea>
+      <textarea class="input" id="pruebaInstrucciones" rows="2" placeholder="Opcional, p. ej.: Marca en la cabecera, rellenando todo el cuadro, la única alternativa correcta de cada pregunta." oninput="armarCampo('instrucciones', this.value)"></textarea>
     </div>
     <div class="grid-2">
       <div class="form-group">
@@ -187,7 +187,10 @@
       <div id="vistaClaves"></div>
     </div>
 
-    <div id="hojasWrap"><div id="hojas"></div></div>
+    <div id="vistaArea">
+      <div id="hojasWrap"><div id="hojas"></div></div>
+      <div id="vistaLateral" class="no-imprimir"></div>
+    </div>
   </div>
 </div>
 
@@ -223,6 +226,7 @@
       <li><b>Armar:</b> escribe el título y elige 5 preguntas del banco (botón "Agregar del banco", con vista previa). En los problemas puedes fijar el set de cada forma o dejarlo al azar (siempre distinto en A y B).</li>
       <li><b>Generar formas A y B:</b> la forma A sale con las preguntas en orden aleatorio y la B en otro orden (ninguna pregunta en la misma posición); las opciones también se mezclan de forma distinta y la correcta cambia de letra. La prueba queda guardada en <b>Guardadas</b>.</li>
       <li><b>Vista previa:</b> revisa las hojas tal como se imprimen, mira las claves e imprime. Con <i>Distribuir en dos caras</i> (activada por defecto) las preguntas se reparten entre las dos caras de cada forma y el espacio en blanco sobrante se deja por igual después de cada pregunta; desactívala para que la cara 1 se llene primero.</li>
+      <li><b>Espacio para cálculos:</b> junto a cada media hoja hay un panel con una fila por pregunta. Los botones <b>−</b> y <b>+</b> quitan o añaden 5 mm de blanco bajo esa pregunta; la diferencia la compensan las demás preguntas de la misma cara, salvo las que marques con el candado 🔒, que conservan su espacio. El botón ⟲ vuelve al reparto igual. El reparto se guarda con la prueba y se rehace al volver a mezclar.</li>
     </ol>
     <h2>Impresión</h2>
     <p>Cada prueba ocupa media hoja A4 (210 × 148,5 mm) por las dos caras, igual que tu plantilla de Word impresa a dos páginas por hoja. La disposición recomendada arma directamente la hoja A4: en la <b>cara 1</b> van arriba la forma A y abajo la forma B (primera cara de cada una) y en la <b>cara 2</b> sus dorsos. Imprime "Solo cara 1", vuelve a cargar las hojas y luego "Solo cara 2" (o "Imprimir todo" si la impresora imprime a doble cara por el borde largo). Corta por la línea de puntos. Si el dorso te sale cruzado (la forma B detrás de la A), marca "Invertir mitades en la cara 2".</p>

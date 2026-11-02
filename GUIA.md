@@ -145,7 +145,11 @@ posición en las dos formas.
 
 1. En **Vista previa**, deja la disposición *Hojas A4: dos pruebas por hoja* y
    la casilla *Distribuir en dos caras* marcada (las preguntas se reparten
-   entre las dos caras con el mismo espacio en blanco tras cada una).
+   entre las dos caras con el mismo espacio en blanco tras cada una). Si un
+   problema necesita más espacio para los cálculos, usa el panel que hay junto
+   a cada media hoja: **+** y **−** cambian su espacio de 5 en 5 mm a costa de
+   las demás preguntas de esa cara; el candado 🔒 fija el espacio de una
+   pregunta para que no cambie al ajustar otras; ⟲ vuelve al reparto igual.
 2. Pulsa **🖨️ Solo cara 1**. En el diálogo de Chrome: papel A4, escala 100 %
    (no "ajustar a la página"), márgenes "Ninguno" (o "Predeterminados").
    Imprime **una sola hoja** de prueba.

@@ -14,7 +14,21 @@ const VISTA = {
   cabeceras: {},       // data URL de la cabecera por casilla F (0 = sin marcar)
   escala: 1,
   avisosPaginacion: [],
+  caras: {},           // por forma y cara: { libre, numeros, nodos, media } (ver paginarForma)
 };
+
+// Geometría de la media hoja (210 × 148,5 mm). Debe coincidir con .cara en el CSS.
+const CARA_PAD_TOP_MM = 5;
+const CARA_PAD_LADO_MM = 6;
+// Cabecera impresa: 206 mm de ancho, centrada. La imagen tiene 3,6 mm de blanco
+// a cada lado y 2,1 mm arriba, así que la tinta queda a ≈5,5 mm de los bordes
+// laterales del papel y a ≈6,1 mm del superior (nunca dentro de los 5 mm). Su
+// borde inferior se mantiene donde quedaba con el ancho anterior (198 mm):
+// a CABECERA_FONDO_MM del borde superior de la media hoja.
+const CABECERA_ANCHO_MM = 206;
+const CABECERA_FONDO_MM = CARA_PAD_TOP_MM + 198 * 23.5 / 210;   // ≈ 27,16 mm
+const PX_POR_MM = 96 / 25.4;
+const ESPACIO_PASO_MM = 5;   // paso de los botones +/− del espacio en blanco
 
 // Geometría de img/cabecera_v2.png: recorte de la cabecera v2 (x 0..210 mm,
 // y 1,0..24,5 mm de la página) a 600 dpi. Casillas F en coordenadas de página
@@ -101,6 +115,7 @@ function distribucionOpciones(opciones) {
 function nodoPregunta(item, imagen, opts) {
   opts = opts || {};
   const div = el('div', 'pregunta');
+  div.dataset.numero = item.numero;
   if (imagen && imagen.datos && imagen.posicion !== 'abajo') {
     const img = crearImagenPregunta(imagen);
     img.classList.add('fig-der');
@@ -175,12 +190,20 @@ function construirMedia(prueba, forma, cara, cabeceraURL) {
 
   if (cara === 1) {
     const cab = el('div', 'cabecera-omr');
-    cab.style.width = prueba.opciones.ancho_cabecera_mm + 'mm';
+    const anchoCab = CABECERA_ANCHO_MM;
+    const altoCab = anchoCab * CABECERA.alto_mm / CABECERA.ancho_mm;
+    cab.style.width = anchoCab + 'mm';
+    // Se sale del área de márgenes (hacia arriba y a los lados) con márgenes
+    // negativos; el borde inferior queda fijo en CABECERA_FONDO_MM.
+    cab.style.marginTop = (CABECERA_FONDO_MM - altoCab - CARA_PAD_TOP_MM) + 'mm';
+    const lado = (210 - 2 * CARA_PAD_LADO_MM - anchoCab) / 2;
+    cab.style.marginLeft = lado + 'mm';
+    cab.style.marginRight = lado + 'mm';
     const img = document.createElement('img');
     img.src = cabeceraURL;
     img.alt = 'Cabecera OMR';
     img.style.width = '100%';
-    img.style.height = (prueba.opciones.ancho_cabecera_mm * CABECERA.alto_mm / CABECERA.ancho_mm) + 'mm';
+    img.style.height = altoCab + 'mm';
     cab.appendChild(img);
     // Si el lienzo no pudo pintar la F (file://), se superpone un cuadro negro.
     if (prueba.opciones.marcar_F && cabeceraURL && !/^data:/.test(cabeceraURL) && CABECERA.F[forma.F]) {
@@ -259,19 +282,181 @@ function paginarForma(prueba, forma, media1, media2) {
   if (desborda(media1)) avisos.push(`Forma ${forma.letra}: la cara 1 no cabe (reduce la letra o el ancho de las imágenes, o pasa preguntas a la cara 2).`);
   if (desborda(media2)) avisos.push(`Forma ${forma.letra}: la cara 2 no cabe (reduce la letra o el ancho de las imágenes).`);
 
-  // Espacio uniforme tras cada pregunta (solo si todo cabe: si una cara
+  // Espacio en blanco tras cada pregunta (solo si todo cabe: si una cara
   // desborda, se deja el reparto natural para que se vea el problema).
-  if (distribuir && avisos.length === 0) {
-    [[media1, c1], [media2, c2]].forEach(([media, cuerpo]) => {
-      const m = cuerpo.children.length;
-      const libre = espacioLibre(media);
-      if (m > 0 && libre > 1) {
-        const extra = (libre - 1) / m;
-        Array.from(cuerpo.children).forEach((nd) => { nd.style.paddingBottom = extra + 'px'; });
-      }
-    });
-  }
+  const registro = (VISTA.caras[forma.letra] = {});
+  [[media1, c1, 1], [media2, c2, 2]].forEach(([media, cuerpo, cara]) => {
+    const nodosCara = Array.from(cuerpo.children);
+    registro[cara] = {
+      media,
+      nodos: nodosCara,
+      numeros: nodosCara.map((nd) => parseInt(nd.dataset.numero, 10)),
+      libre: (distribuir && avisos.length === 0) ? Math.max(0, espacioLibre(media) - 1) : 0,
+    };
+  });
+  aplicarEspacios(prueba, forma.letra);
   return avisos;
+}
+
+// ============================================
+// ESPACIO EN BLANCO TRAS CADA PREGUNTA
+// ============================================
+// El espacio libre de cada cara se reparte entre sus preguntas según
+// prueba.espacios[forma][numero] = { frac, bloqueado }: `frac` es la parte del
+// espacio libre (las de una cara suman 1; por defecto, iguales) y
+// `bloqueado` hace que la pregunta no cambie cuando se ajusta otra. Guardar
+// fracciones y no milímetros hace que el reparto siga valiendo si cambia el
+// tamaño de letra o el dispositivo.
+function fraccionesDeCara(prueba, letra, cara) {
+  const reg = VISTA.caras[letra] && VISTA.caras[letra][cara];
+  if (!reg || !reg.numeros.length) return [];
+  const m = reg.numeros.length;
+  prueba.espacios = prueba.espacios || {};
+  const porForma = (prueba.espacios[letra] = prueba.espacios[letra] || {});
+  let fr = reg.numeros.map((n) => (porForma[n] && typeof porForma[n].frac === 'number' && porForma[n].frac >= 0) ? porForma[n].frac : NaN);
+  const suma = fr.reduce((a, b) => a + b, 0);
+  if (fr.some(isNaN) || !(suma > 0)) fr = fr.map(() => 1 / m);
+  else if (Math.abs(suma - 1) > 1e-6) fr = fr.map((f) => f / suma);
+  reg.numeros.forEach((n, i) => { porForma[n] = { frac: fr[i], bloqueado: !!(porForma[n] && porForma[n].bloqueado) }; });
+  return fr;
+}
+
+function aplicarEspacios(prueba, letra) {
+  [1, 2].forEach((cara) => {
+    const reg = VISTA.caras[letra] && VISTA.caras[letra][cara];
+    if (!reg) return;
+    const fr = fraccionesDeCara(prueba, letra, cara);
+    reg.nodos.forEach((nd, i) => { nd.style.paddingBottom = reg.libre > 0 ? (fr[i] * reg.libre) + 'px' : ''; });
+  });
+}
+
+function caraDePregunta(letra, numero) {
+  const r = VISTA.caras[letra] || {};
+  return (r[1] && r[1].numeros.includes(numero)) ? 1 : 2;
+}
+
+// Botones +/−: mueve ESPACIO_PASO_MM hacia (dir > 0) o desde (dir < 0) la
+// pregunta `numero`; la diferencia la absorben por igual las demás preguntas
+// no bloqueadas de la misma cara (sin bajar de cero).
+async function vistaEspacio(letra, numero, dir) {
+  const prueba = VISTA.prueba;
+  if (!prueba) return;
+  const cara = caraDePregunta(letra, numero);
+  const reg = VISTA.caras[letra] && VISTA.caras[letra][cara];
+  if (!reg || reg.libre <= 0) return;
+  const fr = fraccionesDeCara(prueba, letra, cara);
+  const est = prueba.espacios[letra];
+  const k = reg.numeros.indexOf(numero);
+  if (k < 0) return;
+  const absorbentes = reg.numeros.map((_, i) => i).filter((i) => i !== k && !est[reg.numeros[i]].bloqueado);
+  if (!absorbentes.length) { toast('Desbloquea otra pregunta de esta cara para poder mover el espacio', 'warn'); return; }
+  const paso = ESPACIO_PASO_MM * PX_POR_MM / reg.libre;
+  let delta;
+  if (dir > 0) delta = Math.min(paso, absorbentes.reduce((a, i) => a + fr[i], 0));
+  else delta = -Math.min(paso, fr[k]);
+  if (Math.abs(delta) < 1e-6) {
+    toast(dir > 0 ? 'Las demás preguntas de esta cara ya no tienen espacio que ceder' : 'Este espacio ya está en cero', 'warn');
+    return;
+  }
+  fr[k] += delta;
+  let resto = -delta;                 // lo que deben absorber las demás
+  let pendientes = absorbentes.slice();
+  while (Math.abs(resto) > 1e-9 && pendientes.length) {
+    const parte = resto / pendientes.length;
+    const siguientes = [];
+    pendientes.forEach((i) => {
+      if (fr[i] + parte < 0) { resto += fr[i]; fr[i] = 0; }   // cede todo lo que tiene
+      else { fr[i] += parte; resto -= parte; siguientes.push(i); }
+    });
+    pendientes = siguientes;
+  }
+  reg.numeros.forEach((n, i) => { est[n].frac = Math.max(0, fr[i]); });
+  aplicarEspacios(prueba, letra);
+  vistaRenderPaneles();
+  prueba.modificada = ahoraISO();
+  await guardarPruebaSilenciosa(prueba);
+}
+
+async function vistaBloquear(letra, numero, valor) {
+  const prueba = VISTA.prueba;
+  if (!prueba) return;
+  fraccionesDeCara(prueba, letra, caraDePregunta(letra, numero));
+  prueba.espacios[letra][numero].bloqueado = !!valor;
+  prueba.modificada = ahoraISO();
+  await guardarPruebaSilenciosa(prueba);
+}
+
+// Vuelve al reparto igual (y desbloquea) en una cara.
+async function vistaIgualar(letra, cara) {
+  const prueba = VISTA.prueba;
+  const reg = VISTA.caras[letra] && VISTA.caras[letra][cara];
+  if (!prueba || !reg) return;
+  prueba.espacios = prueba.espacios || {};
+  const porForma = (prueba.espacios[letra] = prueba.espacios[letra] || {});
+  reg.numeros.forEach((n) => { porForma[n] = { frac: 1 / reg.numeros.length, bloqueado: false }; });
+  aplicarEspacios(prueba, letra);
+  vistaRenderPaneles();
+  prueba.modificada = ahoraISO();
+  await guardarPruebaSilenciosa(prueba);
+}
+
+// Paneles laterales (uno por media hoja, en el orden en que aparecen).
+function vistaRenderPaneles() {
+  const lateral = document.getElementById('vistaLateral');
+  lateral.innerHTML = '';
+  const prueba = VISTA.prueba;
+  if (!prueba || !prueba.formas) return;
+  const distribuir = prueba.opciones.distribuir_dos_caras !== false;
+  document.querySelectorAll('#hojas .media').forEach((media) => {
+    const letra = media.classList.contains('forma-A') ? 'A' : 'B';
+    const cara = media.classList.contains('cara-1') ? 1 : 2;
+    const reg = VISTA.caras[letra] && VISTA.caras[letra][cara];
+    const panel = el('div', 'panel-espacios');
+    let cuerpo = '';
+    if (!distribuir) {
+      panel.classList.add('inactivo');
+      cuerpo = '<div class="field-note">Activa "Distribuir en dos caras" para ajustar el espacio en blanco.</div>';
+    } else if (!reg || !reg.numeros.length) {
+      cuerpo = '<div class="field-note">Sin preguntas en esta cara.</div>';
+    } else if (reg.libre <= 0) {
+      panel.classList.add('inactivo');
+      cuerpo = '<div class="field-note">Esta cara no tiene espacio libre que repartir.</div>';
+    } else {
+      const fr = fraccionesDeCara(prueba, letra, cara);
+      const est = prueba.espacios[letra];
+      cuerpo = reg.numeros.map((n, i) => `
+        <div class="fila-espacio">
+          <span class="n">${n}</span>
+          <button type="button" class="btn-x" title="Menos espacio (${ESPACIO_PASO_MM} mm)" onclick="vistaEspacio('${letra}', ${n}, -1)">−</button>
+          <span class="mm">${Math.round(fr[i] * reg.libre / PX_POR_MM)} mm</span>
+          <button type="button" class="btn-x" title="Más espacio (${ESPACIO_PASO_MM} mm)" onclick="vistaEspacio('${letra}', ${n}, 1)">+</button>
+          <label title="Bloquear: este espacio no cambia cuando ajustas otras preguntas"><input type="checkbox" ${est[n].bloqueado ? 'checked' : ''} onchange="vistaBloquear('${letra}', ${n}, this.checked)">🔒</label>
+        </div>`).join('')
+        + `<div class="field-note">Espacio en blanco bajo cada pregunta. Al cambiar uno, lo compensan las preguntas no bloqueadas de esta cara.</div>`;
+    }
+    panel.innerHTML = `<h3>Forma ${letra} · cara ${cara}${distribuir && reg && reg.libre > 0 ? ` <button type="button" class="btn-x" title="Repartir por igual y desbloquear" onclick="vistaIgualar('${letra}', ${cara})">⟲</button>` : ''}</h3>${cuerpo}`;
+    lateral.appendChild(panel);
+  });
+  vistaColocarPaneles();
+}
+
+// Alinea cada panel con su media hoja (en pantallas anchas; en estrechas van
+// uno tras otro bajo las hojas).
+function vistaColocarPaneles() {
+  const lateral = document.getElementById('vistaLateral');
+  const paneles = lateral.querySelectorAll('.panel-espacios');
+  const medias = document.querySelectorAll('#hojas .media');
+  if (!paneles.length) return;
+  const absolutos = getComputedStyle(paneles[0]).position === 'absolute';
+  const base = lateral.getBoundingClientRect().top;
+  let fondo = 0;
+  paneles.forEach((p, i) => {
+    if (!absolutos || !medias[i]) { p.style.top = ''; return; }
+    const top = medias[i].getBoundingClientRect().top - base;
+    p.style.top = top + 'px';
+    fondo = Math.max(fondo, top + p.offsetHeight);
+  });
+  lateral.style.minHeight = absolutos ? fondo + 'px' : '';
 }
 
 function lineaCorte() {
@@ -289,6 +474,8 @@ async function vistaRenderizar() {
   const prueba = VISTA.prueba;
   const hojas = document.getElementById('hojas');
   hojas.innerHTML = '';
+  VISTA.caras = {};
+  document.getElementById('vistaLateral').innerHTML = '';
   if (!prueba || !prueba.formas) return;
   const op = prueba.opciones;
   const [urlA, urlB] = await Promise.all([
@@ -336,6 +523,7 @@ async function vistaRenderizar() {
   );
   vistaAjustarEscala();
   vistaRenderAvisos();
+  vistaRenderPaneles();
 }
 
 function vistaAjustarEscala() {
@@ -347,6 +535,7 @@ function vistaAjustarEscala() {
   VISTA.escala = escala;
   hojas.style.transform = `scale(${escala})`;
   wrap.style.height = Math.ceil(hojas.offsetHeight * escala) + 'px';
+  vistaColocarPaneles();
 }
 
 function vistaRenderAvisos() {
@@ -486,6 +675,7 @@ async function vistaRemezclar() {
   if (!prueba) return;
   try {
     prueba.formas = regenerarFormas(prueba, semillaNueva());
+    prueba.espacios = null;
     prueba.modificada = ahoraISO();
     await guardarPruebaSilenciosa(prueba);
     await vistaMostrar(prueba);

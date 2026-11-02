@@ -14,9 +14,19 @@ function armarCargarBorrador() {
   const guardado = lsLeer(LS_BORRADOR, null);
   ARMADO.prueba = normalizarPrueba(guardado) || nuevaPrueba();
   // Borrador de una versión anterior (sin formas generadas): toma los nuevos
-  // valores por defecto (letra 16 pt, punto decimal, sin línea "Nombre").
-  if (guardado && !ARMADO.prueba.formas && !(guardado.opciones && guardado.opciones.v >= 2)) {
-    ['v', 'fuente_pt', 'separador', 'mostrar_nombre_cara2', 'distribuir_dos_caras'].forEach((k) => { ARMADO.prueba.opciones[k] = OPCIONES_PRUEBA_DEFAULT[k]; });
+  // valores por defecto sin pisar lo que el usuario haya cambiado a mano.
+  const vGuardada = (guardado && guardado.opciones && guardado.opciones.v) || 1;
+  if (guardado && !ARMADO.prueba.formas && vGuardada < OPCIONES_PRUEBA_DEFAULT.v) {
+    const op = ARMADO.prueba.opciones;
+    if (vGuardada < 2) {
+      ['separador', 'mostrar_nombre_cara2', 'distribuir_dos_caras'].forEach((k) => { op[k] = OPCIONES_PRUEBA_DEFAULT[k]; });
+      if (op.fuente_pt === 10) op.fuente_pt = OPCIONES_PRUEBA_DEFAULT.fuente_pt;
+    }
+    if (vGuardada < 3) {
+      if (op.fuente_pt === 16) op.fuente_pt = OPCIONES_PRUEBA_DEFAULT.fuente_pt;
+      if (ARMADO.prueba.instrucciones.trim() === INSTRUCCIONES_ANTERIORES) ARMADO.prueba.instrucciones = '';
+    }
+    op.v = OPCIONES_PRUEBA_DEFAULT.v;
     armarGuardarBorrador();
   }
   armarRender();
@@ -200,6 +210,7 @@ async function armarGenerar() {
   }
   try {
     p.formas = regenerarFormas(p, semillaNueva());
+    p.espacios = null;        // orden nuevo: los espacios vuelven a repartirse por igual
     p.modificada = ahoraISO();
     const copia = copiaProfunda(p);
     await bdGuardar(BD_PRUEBAS, copia);
