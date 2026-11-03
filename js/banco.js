@@ -377,7 +377,7 @@ function editorRender() {
 
         <div class="card">
           <h2>Opciones de respuesta</h2>
-          <div class="field-note" style="margin-bottom:8px">Marca la correcta. ${esCalc ? 'Cada opción se calcula con una fórmula a partir de los datos (p. ej. <code>v*t</code>, <code>sqrt(2*h/g)</code>, <code>0.5*m*v^2</code>). Si una opción es un texto fijo ("No se puede determinar"), deja la fórmula vacía y escribe el texto.' : ''}</div>
+          <div class="field-note" style="margin-bottom:8px">Marca la correcta. ${esCalc ? 'Cada opción se calcula con una fórmula a partir de los datos (p. ej. <code>v*t</code>, <code>sqrt(2*h/g)</code>, <code>0.5*m*v^2</code>). Si una opción es un texto fijo ("No se puede determinar"), deja la fórmula vacía y escribe el texto. Con el redondeo <b>Exacto</b> el resultado sale como fracción o raíz (<code>2√5</code>, <code>√2/2</code>, <code>3/4</code>); <code>unsimplify(…)</code> lo muestra como <code>√20</code> y <code>decimal(…)</code> lo fuerza a decimal.' : ''}</div>
           <div id="editorOpciones">${editorHtmlOpciones(p)}</div>
           ${esCalc ? `
           <div class="grid-3" style="margin-top:10px">
@@ -386,8 +386,9 @@ function editorRender() {
                 <option value="auto" ${p.formato.modo === 'auto' ? 'selected' : ''}>Hasta N decimales</option>
                 <option value="fijo" ${p.formato.modo === 'fijo' ? 'selected' : ''}>N decimales fijos</option>
                 <option value="sig" ${p.formato.modo === 'sig' ? 'selected' : ''}>N cifras significativas</option>
+                <option value="exacto" ${p.formato.modo === 'exacto' ? 'selected' : ''}>Exacto: fracciones y raíces</option>
               </select></div>
-            <div class="form-group"><label>N</label>
+            <div class="form-group"><label>N${p.formato.modo === 'exacto' ? ' (si no hay forma exacta)' : ''}</label>
               <input class="input" type="number" min="0" max="8" value="${p.formato.decimales}" oninput="editorFormato('decimales', this.value)"></div>
             <div class="form-group"><label>Unidad (se añade al valor)</label>
               <input class="input" value="${escapeHtml(p.formato.unidad)}" oninput="editorFormato('unidad', this.value)" placeholder="m/s^{2}"></div>
@@ -465,7 +466,7 @@ function editorHtmlDatos(p) {
           <tbody>${filas}</tbody>
         </table>
       </div>
-      <div class="field-note">Constantes disponibles en las fórmulas: <code>pi</code>, <code>e</code>, <code>g</code> = 9,8 (si defines una variable <code>g</code>, se usa la tuya). Funciones: <code>sqrt</code>, <code>abs</code>, <code>sin</code>, <code>cos</code>, <code>tan</code> (radianes), <code>sind</code>, <code>cosd</code>, <code>tand</code> (grados), <code>asin</code>…, <code>ln</code>, <code>log</code>, <code>exp</code>, <code>round(x, n)</code>, <code>min</code>, <code>max</code>, <code>hypot</code>.</div>
+      <div class="field-note">Constantes disponibles en las fórmulas: <code>pi</code>, <code>e</code>, <code>g</code> = 9,8 (si defines una variable <code>g</code>, se usa la tuya). Funciones: <code>sqrt</code>, <code>abs</code>, <code>sin</code>, <code>cos</code>, <code>tan</code> (radianes), <code>sind</code>, <code>cosd</code>, <code>tand</code> (grados), <code>asin</code>…, <code>ln</code>, <code>log</code>, <code>exp</code>, <code>round(x, n)</code>, <code>min</code>, <code>max</code>, <code>hypot</code>, <code>unsimplify</code>, <code>decimal</code>.</div>
     </div>`;
 }
 
@@ -670,7 +671,7 @@ function editorPreview() {
     if (p.sets.length === 0) { tabla.innerHTML = ''; return; }
     const filas = p.sets.map((_, i) => {
       const r = resolverPregunta(p, i, ',');
-      const celdas = r.opciones.map((o) => `<td class="${o.correcta ? 'ok' : ''} ${o.error ? 'error' : ''}" title="${escapeHtml(o.error || '')}">${escapeHtml(textoPlano(o.texto))}</td>`).join('');
+      const celdas = r.opciones.map((o) => `<td class="${o.correcta ? 'ok' : ''} ${o.error ? 'error' : ''}" title="${escapeHtml(o.error || '')}">${escapeHtml(o.plano != null ? o.plano : textoPlano(o.texto))}</td>`).join('');
       const marca = r.errores.length ? ' class="fila-error"' : (r.advertencias.length ? ' class="fila-warn"' : '');
       return `<tr${marca}><td class="set-num">Set ${i + 1}</td>${celdas}</tr>`;
     }).join('');

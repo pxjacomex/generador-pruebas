@@ -25,11 +25,13 @@ cambiar algo.
 ## Reparto del código
 
 - Scripts clásicos con ámbito global; orden de carga: `vendor/katex` →
-  `util` → `formulas` → `almacen` → `modelo` → `vista` → `banco` → `armado` →
-  `guardadas` → `app`.
+  `util` → `exacto` → `formulas` → `almacen` → `modelo` → `vista` → `banco` →
+  `armado` → `guardadas` → `app`.
 - Variables de los problemas: `{{v}}` (llaves dobles, también dentro de `$…$`);
   `{v}` solo se acepta fuera de las fórmulas por compatibilidad.
-- `modelo.js` y `formulas.js` no tocan el DOM. `vista.js` dibuja páginas y
+- `modelo.js`, `formulas.js` y `exacto.js` no tocan el DOM. El cálculo exacto
+  (fracciones, raíces, π, tabla trigonométrica) es código propio en
+  `exacto.js`; no sustituirlo por una biblioteca sin discutirlo. `vista.js` dibuja páginas y
   preguntas (`nodoPregunta`, compartido con el editor y el selector).
 - Los datos viven en IndexedDB (`generador-omr`) y el borrador en localStorage;
   nunca en el repositorio, salvo respaldos JSON que el usuario suba a `banco/`.

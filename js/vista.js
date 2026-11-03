@@ -104,7 +104,7 @@ function crearImagenPregunta(imagen) {
 
 // Según el largo de las opciones: 4 por fila, 2 por fila o una por línea.
 function distribucionOpciones(opciones) {
-  const max = Math.max(0, ...opciones.map((o) => textoPlano(o.texto).length));
+  const max = Math.max(0, ...opciones.map((o) => (o.plano != null ? o.plano : textoPlano(o.texto)).length));
   if (max <= 14) return 'fila';
   if (max <= 48) return 'cuadricula';
   return 'lista';

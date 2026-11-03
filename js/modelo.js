@@ -103,7 +103,7 @@ function normalizarPregunta(p) {
   // Formato numérico
   const f = p.formato || {};
   q.formato = {
-    modo: ['auto', 'fijo', 'sig'].includes(f.modo) ? f.modo : 'auto',
+    modo: ['auto', 'fijo', 'sig', 'exacto'].includes(f.modo) ? f.modo : 'auto',
     decimales: clamp(parseInt(f.decimales, 10) || 0, 0, 8),
     unidad: String(f.unidad || ''),
   };
@@ -151,7 +151,7 @@ function resolverPregunta(p, setIndice, separador) {
   separador = separador || ',';
   const res = { enunciado: p.enunciado, opciones: [], setIndice: null, set: null, errores: [], advertencias: [] };
   if (p.tipo !== 'calculo') {
-    res.opciones = p.opciones.map((o) => ({ texto: o.texto, correcta: !!o.correcta, error: null }));
+    res.opciones = p.opciones.map((o) => ({ texto: o.texto, plano: textoPlano(o.texto), correcta: !!o.correcta, error: null }));
   } else {
     const n = p.sets.length;
     const idx = n ? clamp(parseInt(setIndice, 10) || 0, 0, n - 1) : -1;
@@ -167,23 +167,34 @@ function resolverPregunta(p, setIndice, separador) {
       const formula = String(o.formula || '').trim();
       if (!formula) {
         if (!String(o.texto || '').trim()) res.errores.push(`Opción ${letra}: sin fórmula ni texto.`);
-        return { texto: sustituirVariables(o.texto, set, separador), correcta: !!o.correcta, error: null };
+        const t = sustituirVariables(o.texto, set, separador);
+        return { texto: t, plano: textoPlano(t), correcta: !!o.correcta, error: null };
       }
-      const r = FORMULAS.calcular(formula, set);
+      const exacto = p.formato.modo === 'exacto';
+      const r = FORMULAS.calcular(formula, set, { exacto });
       if (r.error) {
         res.errores.push(`Opción ${letra} (${formula}): ${r.error}`);
-        return { texto: '¿?', correcta: !!o.correcta, error: r.error, valor: null };
+        return { texto: '¿?', plano: '¿?', correcta: !!o.correcta, error: r.error, valor: null };
       }
-      let texto = formatearNumero(r.valor, p.formato, separador);
+      let texto, plano;
+      if (r.exacto) {
+        plano = r.exacto.texto;
+        texto = /^-?\d+$/.test(r.exacto.latex) ? r.exacto.latex : '$' + r.exacto.latex + '$';   // fracciones y raíces las dibuja KaTeX
+      } else {
+        const fmt = exacto ? Object.assign({}, p.formato, { modo: 'auto' }) : p.formato;
+        texto = plano = formatearNumero(r.valor, fmt, separador);
+        if (exacto && r.avisoExacto) res.advertencias.push(`Opción ${letra}: sin forma exacta (${r.avisoExacto}); se muestra en decimal.`);
+      }
       const unidad = String(p.formato.unidad || '').trim();
-      if (unidad) texto += ' ' + unidad;
-      return { texto, correcta: !!o.correcta, error: null, valor: r.valor };
+      if (unidad) { texto += ' ' + unidad; plano += ' ' + unidad; }
+      return { texto, plano, correcta: !!o.correcta, error: null, valor: r.valor };
     });
-    // Opciones repetidas (misma cadena): el problema no se puede responder
+    // Opciones repetidas (mismo valor, o misma cadena si no hay valor): el
+    // problema no se puede responder
     const vistos = new Map();
     res.opciones.forEach((o, i) => {
-      const k = textoPlano(o.texto);
-      if (vistos.has(k)) res.advertencias.push(`Las opciones ${MODELO.LETRAS[vistos.get(k)]} y ${MODELO.LETRAS[i]} dan el mismo valor (${k}).`);
+      const k = (typeof o.valor === 'number') ? 'v:' + Number(o.valor.toPrecision(12)) : 't:' + textoPlano(o.texto);
+      if (vistos.has(k)) res.advertencias.push(`Las opciones ${MODELO.LETRAS[vistos.get(k)]} y ${MODELO.LETRAS[i]} dan el mismo valor (${o.plano || textoPlano(o.texto)}).`);
       else vistos.set(k, i);
     });
   }
@@ -347,7 +358,7 @@ function generarFormas(prueba, preguntasPorId, semilla) {
       const setIdx = usarSet(d);
       const res = resolverPregunta(pregunta, setIdx, sep);
       const perm = usarPerm(d);
-      const opciones = perm.map((k) => ({ texto: res.opciones[k].texto, correcta: res.opciones[k].correcta }));
+      const opciones = perm.map((k) => ({ texto: res.opciones[k].texto, plano: res.opciones[k].plano || textoPlano(res.opciones[k].texto), correcta: res.opciones[k].correcta }));
       res.errores.forEach((e) => avisos.push(`Forma ${def.letra}, pregunta ${pos + 1}: ${e}`));
       res.advertencias.forEach((a) => avisos.push(`Forma ${def.letra}, pregunta ${pos + 1}: ${a}`));
       return {

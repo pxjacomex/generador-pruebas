@@ -5,6 +5,10 @@
 // números, variables, + - * / ^ %, paréntesis y las funciones de la lista.
 //   FORMULAS.calcular('0.5*m*v^2', { m: 2, v: 3 })  →  { valor: 9, error: null }
 //   FORMULAS.calcular('sqrt(2*h/g)', { h: 20 })      →  usa la constante g = 9.8
+//   FORMULAS.calcular('sqrt(20)', {}, { exacto: true })
+//       →  { valor: 4.47…, exacto: { latex: '2\\sqrt{5}', texto: '2√5' } }  (ver js/exacto.js)
+// unsimplify(x), simplify(x) y decimal(x) solo cambian cómo se muestra un
+// resultado exacto; en el cálculo decimal son la identidad.
 // ============================================================================
 'use strict';
 
@@ -22,6 +26,7 @@ const FORMULAS = (() => {
     floor: Math.floor, ceil: Math.ceil, trunc: Math.trunc,
     min: Math.min, max: Math.max,
     rad: (x) => x * RAD, deg: (x) => x / RAD,
+    unsimplify: (x) => x, simplify: (x) => x, decimal: (x) => x,
   };
   const CONSTANTES = { pi: Math.PI, 'π': Math.PI, e: Math.E, g: 9.8 };
 
@@ -38,7 +43,7 @@ const FORMULAS = (() => {
       if (/\s/.test(ch)) { i++; continue; }
       let m;
       if ((m = RE_NUM.exec(s.slice(i)))) {
-        tokens.push({ t: 'num', v: parseFloat(m[0]) }); i += m[0].length; continue;
+        tokens.push({ t: 'num', v: parseFloat(m[0]), s: m[0] }); i += m[0].length; continue;
       }
       if ((m = RE_ID.exec(s.slice(i)))) {
         tokens.push({ t: 'id', v: m[0] }); i += m[0].length; continue;
@@ -100,7 +105,7 @@ const FORMULAS = (() => {
     function atom() {
       const tk = tomar();
       if (!tk) throw new Error('La fórmula termina antes de tiempo');
-      if (tk.t === 'num') return { k: 'num', v: tk.v };
+      if (tk.t === 'num') return { k: 'num', v: tk.v, s: tk.s };
       if (tk.t === 'id') {
         if (esOp('(')) {
           tomar();
@@ -183,16 +188,32 @@ const FORMULAS = (() => {
     return arbol;
   }
 
-  // → { valor: number|null, error: string|null }
-  function calcular(expresion, set) {
+  // → { valor: number|null, error: string|null, exacto: {latex, texto}|null, avisoExacto: string|null }
+  // Con opciones.exacto se intenta además el cálculo exacto (js/exacto.js); si
+  // no tiene forma exacta, `exacto` queda en null y avisoExacto explica por qué.
+  function calcular(expresion, set, opciones) {
+    let arbol;
+    try { arbol = arbolDe(expresion); } catch (e) { return { valor: null, error: e.message || String(e), exacto: null, avisoExacto: null }; }
+    let v;
     try {
-      const v = evaluar(arbolDe(expresion), variablesNumericas(set));
-      if (typeof v !== 'number' || isNaN(v)) return { valor: null, error: 'El resultado no es un número' };
-      if (!isFinite(v)) return { valor: null, error: 'Resultado infinito' };
-      return { valor: v, error: null };
+      v = evaluar(arbol, variablesNumericas(set));
+      if (typeof v !== 'number' || isNaN(v)) return { valor: null, error: 'El resultado no es un número', exacto: null, avisoExacto: null };
+      if (!isFinite(v)) return { valor: null, error: 'Resultado infinito', exacto: null, avisoExacto: null };
     } catch (e) {
-      return { valor: null, error: e.message || String(e) };
+      return { valor: null, error: e.message || String(e), exacto: null, avisoExacto: null };
     }
+    const out = { valor: v, error: null, exacto: null, avisoExacto: null };
+    if (opciones && opciones.exacto && typeof EXACTO !== 'undefined') {
+      try {
+        const ex = EXACTO.evaluarArbol(arbol, set);
+        out.exacto = EXACTO.formatear(ex);          // null si se pidió decimal(…)
+        out.valor = EXACTO.aFloat(ex);              // coherente con lo exacto (sind(36.9) es 3/5 exactamente)
+      } catch (e) {
+        if (e instanceof EXACTO.NoExacto) out.avisoExacto = e.message;
+        else return { valor: null, error: e.message || String(e), exacto: null, avisoExacto: null };
+      }
+    }
+    return out;
   }
 
   // Nombres de variable que usa una fórmula (sin funciones ni constantes).

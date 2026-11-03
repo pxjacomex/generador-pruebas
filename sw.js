@@ -10,13 +10,14 @@
  */
 'use strict';
 
-const VERSION = 'v2';  // subir al añadir o quitar archivos de ASSETS (v2: KaTeX)
+const VERSION = 'v3';  // subir al añadir o quitar archivos de ASSETS (v3: js/exacto.js)
 const CACHE = 'generador-' + VERSION;
 const ASSETS = [
   './',
   './index.html',
   './css/generador.css',
   './js/util.js',
+  './js/exacto.js',
   './js/formulas.js',
   './js/almacen.js',
   './js/modelo.js',

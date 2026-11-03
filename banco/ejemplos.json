@@ -526,6 +526,130 @@
    },
    "creada": "2026-11-01T12:00:00.000Z",
    "modificada": "2026-11-01T12:00:00.000Z"
+  },
+  {
+   "id": "q_ej_exacto_rampa",
+   "tema": "Dinámica",
+   "etiqueta": "exacto",
+   "tipo": "calculo",
+   "enunciado": "Un bloque de masa {{m}} kg está apoyado sobre un plano inclinado sin roce que forma un ángulo de {{ang}}° con la horizontal. Con g = 10 m/s^{2}, el módulo de la componente del peso paralela al plano es:",
+   "imagen": null,
+   "mezclar": true,
+   "opciones": [
+    {
+     "texto": "",
+     "formula": "m*10*sind(ang)",
+     "correcta": true
+    },
+    {
+     "texto": "",
+     "formula": "m*10*cosd(ang)",
+     "correcta": false
+    },
+    {
+     "texto": "",
+     "formula": "m*10*tand(ang)",
+     "correcta": false
+    },
+    {
+     "texto": "",
+     "formula": "m*10/sind(ang)",
+     "correcta": false
+    }
+   ],
+   "variables": [
+    "m",
+    "ang"
+   ],
+   "sets": [
+    {
+     "m": "2",
+     "ang": "30"
+    },
+    {
+     "m": "5",
+     "ang": "36.9"
+    },
+    {
+     "m": "3",
+     "ang": "18.4"
+    },
+    {
+     "m": "4",
+     "ang": "60"
+    },
+    {
+     "m": "10",
+     "ang": "53.1"
+    }
+   ],
+   "formato": {
+    "modo": "exacto",
+    "decimales": 2,
+    "unidad": "N"
+   },
+   "creada": "2026-11-03T12:00:00.000Z",
+   "modificada": "2026-11-03T12:00:00.000Z"
+  },
+  {
+   "id": "q_ej_exacto_vector",
+   "tema": "Vectores",
+   "etiqueta": "exacto",
+   "tipo": "calculo",
+   "enunciado": "Un vector tiene componentes $A_x = {{a}}$ m y $A_y = {{b}}$ m. Su magnitud $|\\vec{A}|$ es:",
+   "imagen": null,
+   "mezclar": true,
+   "opciones": [
+    {
+     "texto": "",
+     "formula": "unsimplify(sqrt(a^2+b^2))",
+     "correcta": true
+    },
+    {
+     "texto": "",
+     "formula": "unsimplify(sqrt(2*a*b))",
+     "correcta": false
+    },
+    {
+     "texto": "",
+     "formula": "a+b",
+     "correcta": false
+    },
+    {
+     "texto": "",
+     "formula": "unsimplify(sqrt(a^2-b^2))",
+     "correcta": false
+    }
+   ],
+   "variables": [
+    "a",
+    "b"
+   ],
+   "sets": [
+    {
+     "a": "4",
+     "b": "2"
+    },
+    {
+     "a": "6",
+     "b": "2"
+    },
+    {
+     "a": "5",
+     "b": "1"
+    },
+    {
+     "a": "3",
+     "b": "1"
+    }
+   ],
+   "formato": {
+    "modo": "exacto",
+    "decimales": 2,
+    "unidad": "m"
+   },
+   "creada": "2026-11-03T12:00:00.000Z",
+   "modificada": "2026-11-03T12:00:00.000Z"
   }
  ]
 }

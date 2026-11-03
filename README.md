@@ -32,7 +32,11 @@ Interfaz y comentarios del código en **español**.
   - *Opciones fijas*: cuatro alternativas de texto, una correcta.
   - *Problema con datos*: el enunciado lleva variables (`{{v}}`, `{{t}}`…),
     varios **sets de datos** (filas de valores) y una **fórmula por opción**
-    (`v*t`, `sqrt(2*h/g)`…) que calcula su texto. Se eligen redondeo y unidad.
+    (`v*t`, `sqrt(2*h/g)`…) que calcula su texto. Se eligen redondeo y unidad;
+    el redondeo *Exacto* escribe el resultado como fracción, raíz o múltiplo de
+    π en LaTeX (`2\sqrt{5}`, `\frac{\sqrt{2}}{2}`), con `unsimplify(…)` para
+    la forma `√20` y `decimal(…)` para forzar el decimal; si no hay forma
+    exacta, esa opción sale en decimal y el editor lo avisa.
   - Cualquier pregunta puede llevar una **imagen o diagrama** (ancho impreso
     en mm, a la derecha del texto o debajo) y una **etiqueta** libre que solo
     se muestra como globo en las listas (Banco, selector y Armar) y entra en
@@ -125,7 +129,8 @@ prueba ocupa **media hoja A4 apaisada (210 × 148,5 mm) por las dos caras**.
 | `index.html` | Pantallas (Banco, Armar, Vista previa, Guardadas, Ayuda), modales y carga de scripts. |
 | `css/generador.css` | Estilos de la interfaz (tema claro; acento verde como el calificador), del "papel" y de impresión (`@media print`). |
 | `js/util.js` | Utilidades: ids, fechas, azar con semilla (mulberry32), archivos, formato de números y texto enriquecido (`^{}`, `_{}`, `**`). |
-| `js/formulas.js` | Evaluador de fórmulas propio (sin `eval`): tokenizador + analizador descendente; funciones y constantes permitidas. |
+| `js/formulas.js` | Evaluador de fórmulas propio (sin `eval`): tokenizador + analizador descendente; funciones y constantes permitidas. Con `{ exacto: true }` delega además en `exacto.js`. |
+| `js/exacto.js` | Cálculo exacto propio: suma de términos `(a/b)·√n·π^k` con BigInt (fracciones, raíces cuadradas, π), raíces desanidadas de dos términos, división por conjugado, tabla trigonométrica exacta (0°, 15°, 30°, 45°, 60°, 75°, 90° y los triángulos notables 4.8°, 9.5°, 18.4°, 36.9°, 53.1°, 71.6°, 80.5°, 85.2°), e inversas. `unsimplify` → forma `√20`; `decimal` → fuerza decimal. Lanza `NoExacto` cuando algo no tiene forma exacta. |
 | `js/almacen.js` | IndexedDB (`generador-omr`: `preguntas`, `pruebas`) y localStorage (borrador, ajustes). |
 | `js/modelo.js` | Estructuras de pregunta y prueba, normalización de importaciones, `resolverPregunta` (enunciado + opciones con un set), `generarFormas` (sorteo de A y B). Sin DOM. |
 | `js/vista.js` | Dibujo de una pregunta (`nodoPregunta`, compartido), páginas, paginación, hojas A4/A5, claves, impresión y cabecera con la F marcada. |
