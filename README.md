@@ -112,12 +112,19 @@ prueba ocupa **media hoja A4 apaisada (210 × 148,5 mm) por las dos caras**.
   pregunta; si se desactiva, la cara 1 se llena primero. Se puede forzar
   cuántas preguntas van en la cara 1. Si algo no cabe, la vista previa lo
   avisa. Antes de medir se esperan las imágenes y las fuentes (KaTeX).
-- **Espacio para cálculos por pregunta**: junto a cada media hoja, un panel
-  con botones −/+ (pasos de 5 mm) y un candado por pregunta. El espacio libre
-  de la cara se reparte según `prueba.espacios[forma][numero] = { frac,
-  bloqueado }` (fracciones que suman 1 por cara; por defecto iguales); al
-  mover una pregunta, la diferencia la absorben las no bloqueadas de esa cara.
-  Se guarda con la prueba y se reinicia al volver a mezclar.
+- **Panel fijo de orden, cara y espacio** (`#vistaLateral`, `position:
+  sticky`): una sección por cara (A1, A2, B1, B2) con una fila por pregunta.
+  Arrastrar (HTML5 drag and drop, o ▲ ▼ ⇅) cambia el orden dentro de la cara
+  o pasa la pregunta a la otra cara de la misma forma: `forma.items` se
+  reordena y renumera, `forma.clave` se recalcula y `forma.corte` fija
+  cuántas van en la cara 1 (null = reparto automático; el botón "auto" lo
+  devuelve). Cada fila lleva además los controles de espacio en blanco: −/+
+  (pasos de 5 mm) y candado; el espacio libre de la cara se reparte según
+  `prueba.espacios[forma][preguntaId] = { frac, bloqueado }` (fracciones que
+  suman 1 por cara; por defecto iguales), así el espacio acompaña a la
+  pregunta al reordenar. Se guarda con la prueba y se reinicia al volver a
+  mezclar. La vista previa avisa si una pregunta queda en la misma posición
+  en las dos formas.
 - Tipografía del papel: Arial/Helvetica (la de la plantilla original); tamaño
   configurable de 9 a 18 pt (12 por defecto). Separador decimal: punto por
   defecto.
@@ -170,7 +177,8 @@ Pregunta (`preguntas` en IndexedDB y en los JSON exportados):
 
 Prueba: `{ id, titulo, curso, fecha, instrucciones, opciones: {…}, items:
 [{ preguntaId, setA, setB }], formas: { semilla, generada, A, B, snapshot,
-avisos }, espacios: { A: { 1: { frac, bloqueado }, … }, B: {…} } }`. Cada forma tiene `items: [{ numero, preguntaId, setIndice,
+avisos }, espacios: { A: { "<preguntaId>": { frac, bloqueado }, … }, B: {…} } }`;
+cada forma lleva `corte` (preguntas en la cara 1, o null). Cada forma tiene `items: [{ numero, preguntaId, setIndice,
 enunciado, opciones: [{ texto, correcta }], correcta }]` y `clave`.
 
 ## Probar en local

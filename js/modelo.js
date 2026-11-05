@@ -371,7 +371,7 @@ function generarFormas(prueba, preguntasPorId, semilla) {
         correcta: letraCorrecta(opciones),
       };
     });
-    return { letra: def.letra, F: def.F, items: lista, clave: lista.map((it) => it.correcta) };
+    return { letra: def.letra, F: def.F, items: lista, clave: lista.map((it) => it.correcta), corte: null };
   }
 
   const A = construirForma(MODELO.FORMAS[0], ordenA, (d) => d.setA, (d) => d.permA);

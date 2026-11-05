@@ -261,7 +261,10 @@ function paginarForma(prueba, forma, media1, media2) {
   const repartir = (k) => nodos.forEach((nd, i) => { nd.style.paddingBottom = ''; (i < k ? c1 : c2).appendChild(nd); });
 
   let k = null;
-  if (!automatico) {
+  if (forma.corte != null) {                    // corte fijado a mano en el panel (arrastre / ⇅)
+    k = clamp(parseInt(forma.corte, 10) || 0, 0, n);
+    repartir(k);
+  } else if (!automatico) {
     k = clamp(parseInt(pref, 10) || 0, 0, n);
     repartir(k);
   } else if (distribuir && n >= 2) {
@@ -287,10 +290,12 @@ function paginarForma(prueba, forma, media1, media2) {
   const registro = (VISTA.caras[forma.letra] = {});
   [[media1, c1, 1], [media2, c2, 2]].forEach(([media, cuerpo, cara]) => {
     const nodosCara = Array.from(cuerpo.children);
+    const numeros = nodosCara.map((nd) => parseInt(nd.dataset.numero, 10));
     registro[cara] = {
       media,
       nodos: nodosCara,
-      numeros: nodosCara.map((nd) => parseInt(nd.dataset.numero, 10)),
+      numeros,
+      ids: numeros.map((num) => forma.items.find((it) => it.numero === num).preguntaId),
       libre: (distribuir && avisos.length === 0) ? Math.max(0, espacioLibre(media) - 1) : 0,
     };
   });
@@ -302,23 +307,43 @@ function paginarForma(prueba, forma, media1, media2) {
 // ESPACIO EN BLANCO TRAS CADA PREGUNTA
 // ============================================
 // El espacio libre de cada cara se reparte entre sus preguntas según
-// prueba.espacios[forma][numero] = { frac, bloqueado }: `frac` es la parte del
-// espacio libre (las de una cara suman 1; por defecto, iguales) y
-// `bloqueado` hace que la pregunta no cambie cuando se ajusta otra. Guardar
-// fracciones y no milímetros hace que el reparto siga valiendo si cambia el
-// tamaño de letra o el dispositivo.
+// prueba.espacios[forma][preguntaId] = { frac, bloqueado }: `frac` es la parte
+// del espacio libre (las de una cara suman 1; por defecto, iguales) y
+// `bloqueado` hace que la pregunta no cambie cuando se ajusta otra. Se guarda
+// por id de pregunta, así el espacio acompaña a la pregunta si se reordena, y
+// en fracciones, así el reparto sigue valiendo si cambia la letra o el equipo.
 function fraccionesDeCara(prueba, letra, cara) {
   const reg = VISTA.caras[letra] && VISTA.caras[letra][cara];
-  if (!reg || !reg.numeros.length) return [];
-  const m = reg.numeros.length;
+  if (!reg || !reg.ids.length) return [];
+  const m = reg.ids.length;
   prueba.espacios = prueba.espacios || {};
   const porForma = (prueba.espacios[letra] = prueba.espacios[letra] || {});
-  let fr = reg.numeros.map((n) => (porForma[n] && typeof porForma[n].frac === 'number' && porForma[n].frac >= 0) ? porForma[n].frac : NaN);
+  let fr = reg.ids.map((id) => (porForma[id] && typeof porForma[id].frac === 'number' && porForma[id].frac >= 0) ? porForma[id].frac : NaN);
   const suma = fr.reduce((a, b) => a + b, 0);
   if (fr.some(isNaN) || !(suma > 0)) fr = fr.map(() => 1 / m);
   else if (Math.abs(suma - 1) > 1e-6) fr = fr.map((f) => f / suma);
-  reg.numeros.forEach((n, i) => { porForma[n] = { frac: fr[i], bloqueado: !!(porForma[n] && porForma[n].bloqueado) }; });
+  reg.ids.forEach((id, i) => { porForma[id] = { frac: fr[i], bloqueado: !!(porForma[id] && porForma[id].bloqueado) }; });
   return fr;
+}
+
+// Pruebas guardadas antes: espacios por número de pregunta → por id.
+function migrarEspacios(prueba) {
+  if (!prueba.formas || !prueba.espacios) return;
+  ['A', 'B'].forEach((letra) => {
+    const porForma = prueba.espacios[letra];
+    const forma = prueba.formas[letra];
+    if (!porForma || !forma) return;
+    const nuevo = {};
+    let cambiado = false;
+    Object.keys(porForma).forEach((k) => {
+      if (/^\d+$/.test(k)) {
+        const it = forma.items.find((x) => x.numero === parseInt(k, 10));
+        if (it) nuevo[it.preguntaId] = porForma[k];
+        cambiado = true;
+      } else nuevo[k] = porForma[k];
+    });
+    if (cambiado) prueba.espacios[letra] = nuevo;
+  });
 }
 
 function aplicarEspacios(prueba, letra) {
@@ -330,25 +355,25 @@ function aplicarEspacios(prueba, letra) {
   });
 }
 
-function caraDePregunta(letra, numero) {
+function caraDePregunta(letra, id) {
   const r = VISTA.caras[letra] || {};
-  return (r[1] && r[1].numeros.includes(numero)) ? 1 : 2;
+  return (r[1] && r[1].ids.includes(id)) ? 1 : 2;
 }
 
 // Botones +/−: mueve ESPACIO_PASO_MM hacia (dir > 0) o desde (dir < 0) la
-// pregunta `numero`; la diferencia la absorben por igual las demás preguntas
-// no bloqueadas de la misma cara (sin bajar de cero).
-async function vistaEspacio(letra, numero, dir) {
+// pregunta `id`; la diferencia la absorben por igual las demás preguntas no
+// bloqueadas de la misma cara (sin bajar de cero).
+async function vistaEspacio(letra, id, dir) {
   const prueba = VISTA.prueba;
   if (!prueba) return;
-  const cara = caraDePregunta(letra, numero);
+  const cara = caraDePregunta(letra, id);
   const reg = VISTA.caras[letra] && VISTA.caras[letra][cara];
   if (!reg || reg.libre <= 0) return;
   const fr = fraccionesDeCara(prueba, letra, cara);
   const est = prueba.espacios[letra];
-  const k = reg.numeros.indexOf(numero);
+  const k = reg.ids.indexOf(id);
   if (k < 0) return;
-  const absorbentes = reg.numeros.map((_, i) => i).filter((i) => i !== k && !est[reg.numeros[i]].bloqueado);
+  const absorbentes = reg.ids.map((_, i) => i).filter((i) => i !== k && !est[reg.ids[i]].bloqueado);
   if (!absorbentes.length) { toast('Desbloquea otra pregunta de esta cara para poder mover el espacio', 'warn'); return; }
   const paso = ESPACIO_PASO_MM * PX_POR_MM / reg.libre;
   let delta;
@@ -370,18 +395,18 @@ async function vistaEspacio(letra, numero, dir) {
     });
     pendientes = siguientes;
   }
-  reg.numeros.forEach((n, i) => { est[n].frac = Math.max(0, fr[i]); });
+  reg.ids.forEach((pid, i) => { est[pid].frac = Math.max(0, fr[i]); });
   aplicarEspacios(prueba, letra);
   vistaRenderPaneles();
   prueba.modificada = ahoraISO();
   await guardarPruebaSilenciosa(prueba);
 }
 
-async function vistaBloquear(letra, numero, valor) {
+async function vistaBloquear(letra, id, valor) {
   const prueba = VISTA.prueba;
   if (!prueba) return;
-  fraccionesDeCara(prueba, letra, caraDePregunta(letra, numero));
-  prueba.espacios[letra][numero].bloqueado = !!valor;
+  fraccionesDeCara(prueba, letra, caraDePregunta(letra, id));
+  prueba.espacios[letra][id].bloqueado = !!valor;
   prueba.modificada = ahoraISO();
   await guardarPruebaSilenciosa(prueba);
 }
@@ -393,71 +418,189 @@ async function vistaIgualar(letra, cara) {
   if (!prueba || !reg) return;
   prueba.espacios = prueba.espacios || {};
   const porForma = (prueba.espacios[letra] = prueba.espacios[letra] || {});
-  reg.numeros.forEach((n) => { porForma[n] = { frac: 1 / reg.numeros.length, bloqueado: false }; });
+  reg.ids.forEach((id) => { porForma[id] = { frac: 1 / reg.ids.length, bloqueado: false }; });
   aplicarEspacios(prueba, letra);
   vistaRenderPaneles();
   prueba.modificada = ahoraISO();
   await guardarPruebaSilenciosa(prueba);
 }
 
-// Paneles laterales (uno por media hoja, en el orden en que aparecen).
+// ============================================
+// ORDEN DE LAS PREGUNTAS Y CARA DE CADA UNA
+// ============================================
+// forma.items es el orden impreso (numero 1..n) y forma.corte, si no es null,
+// cuántas van en la cara 1 (fijado al arrastrar o con ⇅). Al reordenar se
+// renumeran las preguntas y se recalcula la clave de la forma.
+function listasDeForma(letra) {
+  const r = VISTA.caras[letra] || {};
+  return { 1: r[1] ? r[1].ids.slice() : [], 2: r[2] ? r[2].ids.slice() : [] };
+}
+
+async function aplicarOrden(letra, listas) {
+  const prueba = VISTA.prueba;
+  const forma = prueba.formas[letra];
+  const orden = listas[1].concat(listas[2]);
+  if (orden.length !== forma.items.length) return;
+  forma.items = orden.map((id, i) => Object.assign(forma.items.find((it) => it.preguntaId === id), { numero: i + 1 }));
+  forma.clave = forma.items.map((it) => it.correcta);
+  forma.corte = listas[1].length;
+  prueba.modificada = ahoraISO();
+  await guardarPruebaSilenciosa(prueba);
+  vistaRenderClaves();
+  await vistaRenderizar();
+}
+
+// Coloca la pregunta `id` en la cara `caraDestino` en la posición `indice`
+// (índice contado sin la propia pregunta).
+async function vistaReordenar(letra, id, caraDestino, indice) {
+  const listas = listasDeForma(letra);
+  [1, 2].forEach((c) => { const i = listas[c].indexOf(id); if (i >= 0) listas[c].splice(i, 1); });
+  indice = clamp(indice, 0, listas[caraDestino].length);
+  listas[caraDestino].splice(indice, 0, id);
+  await aplicarOrden(letra, listas);
+}
+
+// ▲ / ▼ dentro de su cara.
+async function vistaMoverFila(letra, id, delta) {
+  const listas = listasDeForma(letra);
+  const cara = caraDePregunta(letra, id);
+  const i = listas[cara].indexOf(id);
+  const j = i + delta;
+  if (i < 0 || j < 0 || j >= listas[cara].length) return;
+  [listas[cara][i], listas[cara][j]] = [listas[cara][j], listas[cara][i]];
+  await aplicarOrden(letra, listas);
+}
+
+// ⇅: pasa a la otra cara de la misma forma (de la cara 1 al principio de la
+// cara 2; de la cara 2 al final de la cara 1).
+async function vistaCambiarCara(letra, id) {
+  const cara = caraDePregunta(letra, id);
+  const listas = listasDeForma(letra);
+  await vistaReordenar(letra, id, cara === 1 ? 2 : 1, cara === 1 ? 0 : listas[1].length);
+}
+
+// Vuelve al reparto automático entre caras de una forma.
+async function vistaCorteAutomatico(letra) {
+  const prueba = VISTA.prueba;
+  if (!prueba) return;
+  prueba.formas[letra].corte = null;
+  prueba.modificada = ahoraISO();
+  await guardarPruebaSilenciosa(prueba);
+  await vistaRenderizar();
+}
+
+// Panel fijo con las cuatro secciones (Forma A cara 1 y 2, Forma B cara 1 y
+// 2): arrastre u ▲ ▼ ⇅ para el orden y la cara, y −/+/🔒 para el espacio.
 function vistaRenderPaneles() {
   const lateral = document.getElementById('vistaLateral');
   lateral.innerHTML = '';
   const prueba = VISTA.prueba;
   if (!prueba || !prueba.formas) return;
   const distribuir = prueba.opciones.distribuir_dos_caras !== false;
-  document.querySelectorAll('#hojas .media').forEach((media) => {
-    const letra = media.classList.contains('forma-A') ? 'A' : 'B';
-    const cara = media.classList.contains('cara-1') ? 1 : 2;
-    const reg = VISTA.caras[letra] && VISTA.caras[letra][cara];
-    const panel = el('div', 'panel-espacios');
-    let cuerpo = '';
-    if (!distribuir) {
-      panel.classList.add('inactivo');
-      cuerpo = '<div class="field-note">Activa "Distribuir en dos caras" para ajustar el espacio en blanco.</div>';
-    } else if (!reg || !reg.numeros.length) {
-      cuerpo = '<div class="field-note">Sin preguntas en esta cara.</div>';
-    } else if (reg.libre <= 0) {
-      panel.classList.add('inactivo');
-      cuerpo = '<div class="field-note">Esta cara no tiene espacio libre que repartir.</div>';
-    } else {
-      const fr = fraccionesDeCara(prueba, letra, cara);
-      const est = prueba.espacios[letra];
-      cuerpo = reg.numeros.map((n, i) => `
-        <div class="fila-espacio">
-          <span class="n">${n}</span>
-          <button type="button" class="btn-x" title="Menos espacio (${ESPACIO_PASO_MM} mm)" onclick="vistaEspacio('${letra}', ${n}, -1)">−</button>
-          <span class="mm">${Math.round(fr[i] * reg.libre / PX_POR_MM)} mm</span>
-          <button type="button" class="btn-x" title="Más espacio (${ESPACIO_PASO_MM} mm)" onclick="vistaEspacio('${letra}', ${n}, 1)">+</button>
-          <label title="Bloquear: este espacio no cambia cuando ajustas otras preguntas"><input type="checkbox" ${est[n].bloqueado ? 'checked' : ''} onchange="vistaBloquear('${letra}', ${n}, this.checked)">🔒</label>
-        </div>`).join('')
-        + `<div class="field-note">Espacio en blanco bajo cada pregunta. Al cambiar uno, lo compensan las preguntas no bloqueadas de esta cara.</div>`;
-    }
-    panel.innerHTML = `<h3>Forma ${letra} · cara ${cara}${distribuir && reg && reg.libre > 0 ? ` <button type="button" class="btn-x" title="Repartir por igual y desbloquear" onclick="vistaIgualar('${letra}', ${cara})">⟲</button>` : ''}</h3>${cuerpo}`;
-    lateral.appendChild(panel);
+  const cab = el('div', 'panel-cabecera');
+  cab.innerHTML = '<h3>Orden, cara y espacio de cada pregunta</h3><div class="field-note">Arrastra una fila (o usa ▲ ▼ ⇅) para cambiar el orden o pasarla a la otra cara de la misma forma. La numeración y las claves se recalculan.</div>';
+  lateral.appendChild(cab);
+  ['A', 'B'].forEach((letra) => {
+    const forma = prueba.formas[letra];
+    [1, 2].forEach((cara) => {
+      const reg = VISTA.caras[letra] && VISTA.caras[letra][cara];
+      const seccion = el('div', 'panel-espacios');
+      const ids = reg ? reg.ids : [];
+      const conEspacio = distribuir && reg && reg.libre > 0 && ids.length > 0;
+      const fr = conEspacio ? fraccionesDeCara(prueba, letra, cara) : [];
+      const est = (prueba.espacios && prueba.espacios[letra]) || {};
+      const filas = ids.map((id, i) => {
+        const it = forma.items.find((x) => x.preguntaId === id);
+        const resumen = escapeHtml(recortar(textoPlano(it.enunciado), 48));
+        const espacio = conEspacio ? `
+          <span class="espacio">
+            <button type="button" class="btn-x" title="Menos espacio (${ESPACIO_PASO_MM} mm)" onclick="vistaEspacio('${letra}', '${id}', -1)">−</button>
+            <span class="mm">${Math.round(fr[i] * reg.libre / PX_POR_MM)} mm</span>
+            <button type="button" class="btn-x" title="Más espacio (${ESPACIO_PASO_MM} mm)" onclick="vistaEspacio('${letra}', '${id}', 1)">+</button>
+            <label title="Bloquear: este espacio no cambia cuando ajustas otras preguntas"><input type="checkbox" ${est[id] && est[id].bloqueado ? 'checked' : ''} onchange="vistaBloquear('${letra}', '${id}', this.checked)">🔒</label>
+          </span>` : '';
+        return `
+          <div class="fila-orden" draggable="true" data-forma="${letra}" data-id="${id}" title="${resumen}">
+            <span class="asa" title="Arrastra para cambiar el orden o la cara">⋮⋮</span>
+            <span class="n">${it.numero}</span>
+            <span class="txt">${resumen}</span>
+            <span class="mover">
+              <button type="button" class="btn-x" title="Subir" onclick="vistaMoverFila('${letra}', '${id}', -1)" ${i === 0 ? 'disabled' : ''}>▲</button>
+              <button type="button" class="btn-x" title="Bajar" onclick="vistaMoverFila('${letra}', '${id}', 1)" ${i === ids.length - 1 ? 'disabled' : ''}>▼</button>
+              <button type="button" class="btn-x" title="Pasar a la cara ${cara === 1 ? 2 : 1} de la forma ${letra}" onclick="vistaCambiarCara('${letra}', '${id}')">⇅</button>
+            </span>
+            ${espacio}
+          </div>`;
+      }).join('');
+      let nota = '';
+      if (!distribuir) nota = '<div class="field-note">Activa "Distribuir en dos caras" para ajustar el espacio en blanco.</div>';
+      else if (reg && ids.length && reg.libre <= 0) nota = '<div class="field-note">Esta cara no tiene espacio libre que repartir.</div>';
+      const acciones = (conEspacio ? ` <button type="button" class="btn-x" title="Repartir el espacio por igual y desbloquear" onclick="vistaIgualar('${letra}', ${cara})">⟲</button>` : '')
+        + (forma.corte != null && cara === 1 ? ` <button type="button" class="btn-x ancho" title="Volver al reparto automático entre caras" onclick="vistaCorteAutomatico('${letra}')">auto</button>` : '');
+      seccion.innerHTML = `<h3><span>Forma ${letra} · cara ${cara} <small>${cara === 1 ? 'frente' : 'dorso'}</small></span><span>${acciones}</span></h3>`
+        + `<div class="lista-orden" data-forma="${letra}" data-cara="${cara}">${filas || '<div class="lista-vacia">Sin preguntas: arrastra aquí</div>'}</div>${nota}`;
+      lateral.appendChild(seccion);
+    });
   });
-  vistaColocarPaneles();
 }
 
-// Alinea cada panel con su media hoja (en pantallas anchas; en estrechas van
-// uno tras otro bajo las hojas).
-function vistaColocarPaneles() {
-  const lateral = document.getElementById('vistaLateral');
-  const paneles = lateral.querySelectorAll('.panel-espacios');
-  const medias = document.querySelectorAll('#hojas .media');
-  if (!paneles.length) return;
-  const absolutos = getComputedStyle(paneles[0]).position === 'absolute';
-  const base = lateral.getBoundingClientRect().top;
-  let fondo = 0;
-  paneles.forEach((p, i) => {
-    if (!absolutos || !medias[i]) { p.style.top = ''; return; }
-    const top = medias[i].getBoundingClientRect().top - base;
-    p.style.top = top + 'px';
-    fondo = Math.max(fondo, top + p.offsetHeight);
-  });
-  lateral.style.minHeight = absolutos ? fondo + 'px' : '';
+// ---- Arrastrar y soltar (delegado en #vistaLateral) ----
+VISTA.arrastre = null;
+function indiceDeSoltado(lista, y) {
+  const filas = Array.from(lista.querySelectorAll('.fila-orden:not(.arrastrando)'));
+  for (let i = 0; i < filas.length; i++) {
+    const r = filas[i].getBoundingClientRect();
+    if (y < r.top + r.height / 2) return i;
+  }
+  return filas.length;
 }
+function quitarIndicador() {
+  document.querySelectorAll('#vistaLateral .indicador-soltar').forEach((n) => n.remove());
+  document.querySelectorAll('#vistaLateral .lista-orden.destino').forEach((n) => n.classList.remove('destino'));
+}
+function vistaInicializarArrastre() {
+  const lateral = document.getElementById('vistaLateral');
+  if (!lateral) return;
+  lateral.addEventListener('dragstart', (e) => {
+    const fila = e.target.closest && e.target.closest('.fila-orden');
+    if (!fila) return;
+    VISTA.arrastre = { letra: fila.dataset.forma, id: fila.dataset.id };
+    fila.classList.add('arrastrando');
+    try { e.dataTransfer.setData('text/plain', fila.dataset.id); e.dataTransfer.effectAllowed = 'move'; } catch (_) {}
+  });
+  lateral.addEventListener('dragover', (e) => {
+    const lista = e.target.closest && e.target.closest('.lista-orden');
+    if (!lista || !VISTA.arrastre || lista.dataset.forma !== VISTA.arrastre.letra) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    quitarIndicador();
+    lista.classList.add('destino');
+    const idx = indiceDeSoltado(lista, e.clientY);
+    const filas = Array.from(lista.querySelectorAll('.fila-orden:not(.arrastrando)'));
+    const ind = el('div', 'indicador-soltar');
+    if (idx < filas.length) lista.insertBefore(ind, filas[idx]); else lista.appendChild(ind);
+  });
+  lateral.addEventListener('dragleave', (e) => {
+    const lista = e.target.closest && e.target.closest('.lista-orden');
+    if (lista && !lista.contains(e.relatedTarget)) quitarIndicador();
+  });
+  lateral.addEventListener('drop', async (e) => {
+    const lista = e.target.closest && e.target.closest('.lista-orden');
+    if (!lista || !VISTA.arrastre || lista.dataset.forma !== VISTA.arrastre.letra) { quitarIndicador(); return; }
+    e.preventDefault();
+    const idx = indiceDeSoltado(lista, e.clientY);
+    const { letra, id } = VISTA.arrastre;
+    VISTA.arrastre = null;
+    quitarIndicador();
+    await vistaReordenar(letra, id, parseInt(lista.dataset.cara, 10), idx);
+  });
+  lateral.addEventListener('dragend', () => {
+    VISTA.arrastre = null;
+    quitarIndicador();
+    document.querySelectorAll('#vistaLateral .arrastrando').forEach((n) => n.classList.remove('arrastrando'));
+  });
+}
+document.addEventListener('DOMContentLoaded', vistaInicializarArrastre);
 
 function lineaCorte() {
   return el('div', 'linea-corte', '<span>✂</span>');
@@ -535,7 +678,6 @@ function vistaAjustarEscala() {
   VISTA.escala = escala;
   hojas.style.transform = `scale(${escala})`;
   wrap.style.height = Math.ceil(hojas.offsetHeight * escala) + 'px';
-  vistaColocarPaneles();
 }
 
 function vistaRenderAvisos() {
@@ -547,6 +689,12 @@ function vistaRenderAvisos() {
     if (prueba.formas.A.items.length !== MODELO.N_PREGUNTAS) {
       lista.push({ tipo: 'warn', texto: `La prueba tiene ${prueba.formas.A.items.length} preguntas; el Calificador OMR lee ${MODELO.N_PREGUNTAS} (P1 a P5).` });
     }
+  }
+  if (prueba && prueba.formas) {
+    prueba.formas.A.items.forEach((ia, i) => {
+      const ib = prueba.formas.B.items[i];
+      if (ib && ib.preguntaId === ia.preguntaId) lista.push({ tipo: 'warn', texto: `La pregunta ${i + 1} es la misma en las dos formas ("${recortar(textoPlano(ia.enunciado), 40)}"): conviene moverla en una de ellas.` });
+    });
   }
   VISTA.avisosPaginacion.forEach((a) => lista.push({ tipo: 'error', texto: a }));
   cont.innerHTML = lista.map((a) => `<div class="aviso-item ${a.tipo}">${escapeHtml(a.texto)}</div>`).join('');
@@ -594,6 +742,7 @@ async function vistaMostrar(prueba) {
   vacia.classList.toggle('hidden', hay);
   cont.classList.toggle('hidden', !hay);
   if (!hay) { document.getElementById('hojas').innerHTML = ''; return; }
+  migrarEspacios(prueba);
   document.getElementById('vistaTitulo').textContent = tituloPrueba(prueba) + (prueba.curso ? ' · ' + prueba.curso : '');
   document.getElementById('vistaMeta').textContent = `Generada el ${fechaCorta(prueba.formas.generada)} · semilla ${prueba.formas.semilla}`;
   const op = prueba.opciones;
@@ -615,6 +764,7 @@ async function vistaOpcion(nombre, valor) {
   const prueba = VISTA.prueba;
   if (!prueba) return;
   prueba.opciones[nombre] = valor;
+  if (nombre === 'preguntas_cara1') { prueba.formas.A.corte = null; prueba.formas.B.corte = null; }
   prueba.modificada = ahoraISO();
   document.getElementById('vistaInvertirWrap').classList.toggle('hidden', prueba.opciones.disposicion === 'a5');
   await guardarPruebaSilenciosa(prueba);
