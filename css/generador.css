@@ -79,7 +79,7 @@ body {
 .card h2 { font-size: 15px; font-weight: 600; margin-bottom: 10px; color: var(--text); }
 .card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
 .card-head h2 { margin-bottom: 0; }
-.card.sticky { position: sticky; top: 12px; }
+.card.sticky { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; }
 .card.vacio, .vacio { color: var(--text-dim); font-size: 14px; text-align: center; padding: 28px 16px; line-height: 1.5; }
 .label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; font-weight: 600; }
 
@@ -194,7 +194,10 @@ textarea.input { resize: vertical; line-height: 1.4; min-height: 44px; }
 .selector-lista { max-height: 60vh; overflow-y: auto; padding-right: 4px; }
 
 /* ===== Editor ===== */
-.editor-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 400px); gap: 12px; align-items: start; }
+.editor-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 400px); gap: 12px; align-items: stretch; }
+/* La columna de la vista previa ocupa toda la altura del editor para que su
+   tarjeta "Así se imprime" pueda seguir a la vista (sticky) al hacer scroll. */
+.editor-col.editor-preview { align-self: stretch; }
 @media (max-width: 980px) {
   .editor-grid { grid-template-columns: 1fr; }
   .card.sticky { position: static; }
