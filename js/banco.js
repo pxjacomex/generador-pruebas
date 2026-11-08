@@ -268,6 +268,19 @@ async function bancoImportarArchivo(file) {
   }
 }
 
+// Descarga docs/plantilla_banco.json: el formato del banco con una pregunta
+// de cada tipo (la especificación completa está en docs/FORMATO_BANCO.md).
+async function bancoDescargarPlantilla() {
+  try {
+    const resp = await fetch('docs/plantilla_banco.json', { cache: 'no-cache' });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    descargarArchivo('plantilla_banco.json', await resp.text(), 'application/json');
+    toast('Plantilla descargada. El formato completo está en docs/FORMATO_BANCO.md del repositorio.');
+  } catch (e) {
+    toast('No se pudo descargar la plantilla: ' + e.message, 'error');
+  }
+}
+
 async function bancoCargarEjemplos() {
   try {
     const resp = await fetch('banco/ejemplos.json', { cache: 'no-cache' });

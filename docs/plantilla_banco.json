@@ -1,0 +1,48 @@
+{
+ "tipo": "banco-generador-omr",
+ "version": 1,
+ "exportado": "2026-11-08T12:00:00.000Z",
+ "nota": "Plantilla mínima del formato de banco del Generador de pruebas. Una pregunta de opciones fijas y un problema con datos. Borra esta nota o déjala: la app la ignora.",
+ "preguntas": [
+  {
+   "id": "q_fuente_02_07_001",
+   "tema": "2.7 - Objetos en caída libre",
+   "etiqueta": "concepto",
+   "tipo": "fija",
+   "enunciado": "Una pelota se lanza verticalmente hacia arriba, sin resistencia del aire. En el punto más alto de su trayectoria, su aceleración $\\vec{a}$ es:",
+   "imagen": null,
+   "mezclar": true,
+   "opciones": [
+    { "texto": "$g$ hacia abajo", "formula": "", "correcta": true },
+    { "texto": "Cero", "formula": "", "correcta": false },
+    { "texto": "$g$ hacia arriba", "formula": "", "correcta": false },
+    { "texto": "Depende de la rapidez inicial", "formula": "", "correcta": false }
+   ],
+   "variables": [],
+   "sets": [],
+   "formato": { "modo": "auto", "decimales": 2, "unidad": "" },
+   "creada": "2026-11-08T12:00:00.000Z",
+   "modificada": "2026-11-08T12:00:00.000Z"
+  },
+  {
+   "id": "q_fuente_02_07_002",
+   "tema": "2.7 - Objetos en caída libre",
+   "etiqueta": "cálculo",
+   "tipo": "calculo",
+   "enunciado": "Se deja caer una piedra desde el reposo a una altura de {{h}} m. Con $g = 10\\ \\mathrm{m/s^2}$ y sin roce, ¿cuánto tarda en llegar al suelo?",
+   "imagen": null,
+   "mezclar": true,
+   "opciones": [
+    { "texto": "", "formula": "sqrt(2*h/10)", "correcta": true },
+    { "texto": "", "formula": "h/10", "correcta": false },
+    { "texto": "", "formula": "sqrt(h/10)", "correcta": false },
+    { "texto": "", "formula": "2*h/10", "correcta": false }
+   ],
+   "variables": ["h"],
+   "sets": [ { "h": "20" }, { "h": "45" }, { "h": "80" }, { "h": "125" } ],
+   "formato": { "modo": "exacto", "decimales": 2, "unidad": "s" },
+   "creada": "2026-11-08T12:00:00.000Z",
+   "modificada": "2026-11-08T12:00:00.000Z"
+  }
+ ]
+}

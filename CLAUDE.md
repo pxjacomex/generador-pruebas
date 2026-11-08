@@ -7,8 +7,9 @@ imprime con la cabecera del Calificador OMR (repositorio hermano
 archivos se sirven tal cual (GitHub Pages).
 
 La arquitectura, el formato de datos y la geometría de impresión están en
-`README.md`; la puesta en marcha y el uso, en `GUIA.md`. Leer ambos antes de
-cambiar algo.
+`README.md`; la puesta en marcha y el uso, en `GUIA.md`; el formato del banco
+para herramientas externas, en `docs/FORMATO_BANCO.md` + `docs/banco.schema.json`
+(mantenerlos al día si cambia `normalizarPregunta`). Leer todo antes de cambiar algo.
 
 ## Lineamientos (obligatorios)
 

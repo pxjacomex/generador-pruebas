@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://pxjacomex.github.io/generador-pruebas/docs/banco.schema.json",
+  "title": "Banco de preguntas del Generador de pruebas (banco-generador-omr v1)",
+  "description": "Archivo que importa la pestaña Banco. También se acepta un array de preguntas a secas.",
+  "type": "object",
+  "required": ["tipo", "version", "preguntas"],
+  "properties": {
+    "tipo": { "const": "banco-generador-omr" },
+    "version": { "const": 1 },
+    "exportado": { "type": "string", "description": "Fecha ISO 8601 (informativa)." },
+    "nota": { "type": "string", "description": "Texto libre; la app lo ignora." },
+    "preguntas": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/pregunta" } }
+  },
+  "definitions": {
+    "opcion": {
+      "type": "object",
+      "required": ["texto", "formula", "correcta"],
+      "properties": {
+        "texto": { "type": "string", "description": "Texto de la opción (tipo fija) o texto fijo si no hay fórmula (tipo calculo). Admite $LaTeX$ y {{variable}}." },
+        "formula": { "type": "string", "description": "Solo en tipo calculo: expresión sobre las variables del set, p. ej. \"0.5*m*v^2\", \"sqrt(2*h/g)\", \"m*10*sind(ang)\". Vacía en tipo fija." },
+        "correcta": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "pregunta": {
+      "type": "object",
+      "required": ["id", "tema", "tipo", "enunciado", "opciones"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9_.-]+$", "description": "Único en todo el banco. Al reimportar, una pregunta con el mismo id reemplaza a la anterior. Recomendado: q_<fuente>_<cap>_<sub>_<nnn>." },
+        "tema": { "type": "string", "description": "Agrupa y filtra. Recomendado: \"C.S - Título del subcapítulo\", p. ej. \"2.7 - Objetos en caída libre\"." },
+        "etiqueta": { "type": "string", "maxLength": 40, "description": "Texto libre opcional; se ve en las listas, no se imprime." },
+        "tipo": { "enum": ["fija", "calculo"] },
+        "enunciado": { "type": "string", "minLength": 1, "description": "Texto plano con: $…$ y $$…$$ para LaTeX; ^{2} y _{0} para super/subíndices fuera de las fórmulas; **negrita**; \\n para salto de línea; {{nombre}} para cada dato en tipo calculo. Sin HTML." },
+        "imagen": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "required": ["datos"],
+              "properties": {
+                "datos": { "type": "string", "pattern": "^data:image/(png|jpeg|svg\\+xml);base64,", "description": "Imagen incrustada como data URL (PNG, JPEG o SVG)." },
+                "ancho_mm": { "type": "number", "minimum": 15, "maximum": 190, "default": 55 },
+                "posicion": { "enum": ["derecha", "abajo"], "default": "derecha" },
+                "ancho_px": { "type": "integer", "minimum": 1 },
+                "alto_px": { "type": "integer", "minimum": 1 }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "mezclar": { "type": "boolean", "default": true, "description": "false mantiene el orden de las opciones (p. ej. \"Todas las anteriores\")." },
+        "opciones": {
+          "type": "array", "minItems": 4, "maxItems": 4,
+          "items": { "$ref": "#/definitions/opcion" },
+          "description": "Exactamente 4, en el orden A, B, C, D del banco (la app las mezcla al generar). Exactamente una con correcta: true."
+        },
+        "variables": { "type": "array", "items": { "type": "string", "pattern": "^[A-Za-z\\u00C0-\\u024F\\u0370-\\u03FF_][A-Za-z0-9\\u00C0-\\u024F\\u0370-\\u03FF_]*$" }, "description": "Solo tipo calculo: nombres usados en {{…}} y en las fórmulas. Vacío en tipo fija." },
+        "sets": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": { "type": "string" } },
+          "description": "Solo tipo calculo: una fila por juego de datos; cada clave es una variable y cada valor va como texto (\"2.5\" o \"2,5\"; también textos). Al menos 2 sets para que las formas A y B lleven datos distintos."
+        },
+        "formato": {
+          "type": "object",
+          "properties": {
+            "modo": { "enum": ["auto", "fijo", "sig", "exacto"], "default": "auto", "description": "auto: hasta N decimales; fijo: N decimales; sig: N cifras significativas; exacto: fracciones y raíces en LaTeX." },
+            "decimales": { "type": "integer", "minimum": 0, "maximum": 8, "default": 2 },
+            "unidad": { "type": "string", "description": "Se añade tras cada valor calculado, p. ej. \"m/s^{2}\"." }
+          },
+          "additionalProperties": false
+        },
+        "creada": { "type": "string" },
+        "modificada": { "type": "string" }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        { "if": { "properties": { "tipo": { "const": "calculo" } } },
+          "then": { "required": ["variables", "sets", "formato"], "properties": { "variables": { "minItems": 1 }, "sets": { "minItems": 1 } } } }
+      ]
+    }
+  }
+}

@@ -58,6 +58,7 @@
         <input type="file" id="bancoImportarInput" accept=".json,application/json" style="display:none">
         <button class="btn btn-secondary btn-inline" onclick="bancoExportar()">⬇️ Exportar banco</button>
         <button class="btn btn-ghost btn-inline" onclick="bancoCargarEjemplos()">📥 Cargar ejemplos</button>
+        <button class="btn btn-ghost btn-inline" onclick="bancoDescargarPlantilla()" title="Archivo JSON mínimo con el formato del banco, para imitarlo o dárselo a una IA">📄 Plantilla del formato</button>
         <button class="btn btn-ghost btn-inline" id="btnBancoLimpiar" onclick="bancoLimpiarVista()" title="Vacía la lista en pantalla sin borrar nada del dispositivo">🧹 Limpiar vista</button>
         <button class="btn btn-ghost btn-inline hidden" id="btnBancoRecargar" onclick="bancoRecargarVista()">🔄 Recargar banco guardado</button>
       </div>
@@ -292,6 +293,8 @@
     <p>Escribe la ecuación entre signos de dólar: <code>$ax + by + c = 0$</code> en línea con el texto, o <code>$$v = \frac{d}{t}$$</code> en su propia línea y centrada. Sirve en enunciados, opciones e instrucciones, y se dibuja igual en la vista previa y en la impresión. Ejemplos: <code>$\vec{F} = m\vec{a}$</code>, <code>$E_c = \tfrac{1}{2} m v^{2}$</code>, <code>$\sqrt{2gh}$</code>, <code>$\theta = 30^{\circ}$</code>. Para un signo de dólar literal escribe <code>\$</code>. Las variables de los problemas también funcionan dentro de una ecuación: <code>$v = {{v}}\ \text{m/s}$</code>. Por eso llevan llaves dobles: las simples son los grupos de LaTeX (<code>\vec{F}</code>, <code>E_{c}</code>) y no se tocan. El dibujo lo hace <a href="https://katex.org" target="_blank" rel="noopener">KaTeX</a>, incluido en esta misma página (funciona sin conexión).</p>
     <h2>Explorador de problemas</h2>
     <p>Pestaña independiente para consultar un archivo JSON de problemas de libro con la estructura libro → capítulos → secciones → problemas, como "serway_problemas_cap1-9_15.json". Filtra por capítulo, sección, dificultad, figura o respuesta y busca por texto o por número ("P4.23"); muestra enunciados con sus ecuaciones dibujadas, las figuras (y sus subfiguras si lo marcas) y la respuesta del libro plegada. El archivo queda guardado en este navegador, aparte del banco y de las pruebas, hasta que pulses "Quitar archivo".</p>
+    <h2>Formato del banco para otras herramientas</h2>
+    <p>Si quieres que otra herramienta o una IA te prepare un banco, el botón <b>📄 Plantilla del formato</b> de la pestaña Banco descarga un JSON mínimo válido con una pregunta de cada tipo. La descripción completa de cada campo, el esquema formal (<code>docs/banco.schema.json</code>) y un bloque de instrucciones listo para pegar en otro chat están en <code>docs/FORMATO_BANCO.md</code> del repositorio. Al importar, cada <code>id</code> repetido reemplaza a la pregunta anterior, así que puedes corregir y reimportar sin duplicar.</p>
     <h2>Dónde quedan los datos</h2>
     <p>Todo (banco, pruebas, imágenes) se guarda en este navegador, en este dispositivo; no se envía a ningún servidor. Usa <b>Exportar</b> en Guardadas para hacer copias de seguridad y <b>Importar</b> para llevarlas a otro computador. Después de la primera visita, la página también funciona sin conexión.</p>
   </div>

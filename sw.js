@@ -10,7 +10,7 @@
  */
 'use strict';
 
-const VERSION = 'v4';  // subir al añadir o quitar archivos de ASSETS (v4: explorador de problemas)
+const VERSION = 'v5';  // subir al añadir o quitar archivos de ASSETS (v5: docs/plantilla_banco.json)
 const CACHE = 'generador-' + VERSION;
 const ASSETS = [
   './',
@@ -30,6 +30,7 @@ const ASSETS = [
   './css/explorador.css',
   './img/cabecera_v2.png',
   './banco/ejemplos.json',
+  './docs/plantilla_banco.json',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',

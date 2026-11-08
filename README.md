@@ -150,6 +150,7 @@ prueba ocupa **media hoja A4 apaisada (210 × 148,5 mm) por las dos caras**.
 | `vendor/katex/` | KaTeX 0.19.1 (`katex.min.js`, `katex.min.css`, fuentes woff2, LICENSE) tomado del paquete oficial de npm. Para actualizarlo: `npm pack katex@<versión>`, copiar `dist/katex.min.*` y `dist/fonts/*.woff2`, y subir `VERSION` en `sw.js`. |
 | `img/cabecera_v2.png` | Cabecera OMR v2 recortada (600 dpi). Si cambia la cabecera del calificador, regenerarla desde su `templates/cabecera_v2.pdf` y revisar `CABECERA` en `js/vista.js` (posición de las casillas F). |
 | `banco/ejemplos.json` | Preguntas de ejemplo (Física) en el formato de exportación del banco. |
+| `docs/FORMATO_BANCO.md`, `docs/banco.schema.json`, `docs/plantilla_banco.json` | Especificación del formato del banco: explicación campo a campo con un bloque de instrucciones para pedir bancos a una IA, esquema JSON Schema (borrador 07) y plantilla mínima válida (la descarga el botón "Plantilla del formato" de Banco). |
 | `manifest.webmanifest`, `icons/` | Para instalar la página como app (Chrome → Instalar). |
 | `.nojekyll` | GitHub Pages sirve los archivos tal cual. |
 | `GUIA.md` | Puesta en marcha y uso, paso a paso. |
