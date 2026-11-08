@@ -11,6 +11,7 @@
 <!-- KaTeX (ecuaciones LaTeX), copia local en vendor/ para funcionar sin conexión -->
 <link rel="stylesheet" href="vendor/katex/katex.min.css">
 <link rel="stylesheet" href="css/generador.css">
+<link rel="stylesheet" href="css/explorador.css">
 <!-- Tamaño de página para imprimir; lo cambia vistaImprimir() según la disposición -->
 <style id="estiloPagina" media="print">@page { size: A4 portrait; margin: 0; }</style>
 </head>
@@ -29,6 +30,7 @@
   <button class="tab" data-section="armar">🧩 Armar<span class="tab-badge" id="badgeArmar" style="display:none">0</span></button>
   <button class="tab" data-section="vista">🖨️ Vista previa</button>
   <button class="tab" data-section="guardadas">💾 Guardadas<span class="tab-badge" id="badgeGuardadas" style="display:none">0</span></button>
+  <button class="tab" data-section="explorador">📖 Explorador de problemas</button>
   <button class="tab" data-section="ayuda">❓ Ayuda</button>
 </div>
 
@@ -220,6 +222,46 @@
   </div>
 </div>
 
+<!-- ===== EXPLORADOR DE PROBLEMAS (módulo independiente) ===== -->
+<div class="section" id="section-explorador">
+  <div class="card">
+    <div class="card-head">
+      <h2>Explorador de problemas</h2>
+      <span class="field-note" id="expInfo">Ningún archivo cargado.</span>
+    </div>
+    <div class="btn-row wrap">
+      <button class="btn btn-primary btn-inline" onclick="document.getElementById('expArchivoInput').click()">📂 Cargar archivo JSON de problemas</button>
+      <input type="file" id="expArchivoInput" accept=".json,application/json" style="display:none">
+      <button class="btn btn-ghost btn-inline hidden" id="expQuitar" onclick="EXPLORADOR.quitar()">✖ Quitar archivo</button>
+    </div>
+    <div class="field-note">Archivos con la estructura libro → capítulos → secciones → problemas (enunciado, figuras SVG, respuesta), como "serway_problemas_cap1-9_15.json". El archivo queda guardado en este navegador para no tener que cargarlo cada vez; este módulo no toca el banco ni las pruebas.</div>
+  </div>
+  <div id="expContenido" class="hidden">
+    <div class="card">
+      <div class="toolbar">
+        <select class="select" id="expCapitulo"><option value="">Todos los capítulos</option></select>
+        <select class="select" id="expSeccion" disabled><option value="">Todas las secciones</option></select>
+        <select class="select" id="expDificultad">
+          <option value="">Toda dificultad</option>
+          <option value="1">●○○ sencillo</option>
+          <option value="2">●●○ intermedio</option>
+          <option value="3">●●● desafiante</option>
+        </select>
+        <input class="input" id="expBuscar" type="search" placeholder="Buscar en el enunciado, la respuesta o el número (P4.23)…">
+      </div>
+      <div class="toolbar">
+        <label class="check-row compacta"><input type="checkbox" id="expConFigura"><span>Solo con figura</span></label>
+        <label class="check-row compacta"><input type="checkbox" id="expConRespuesta"><span>Solo con respuesta</span></label>
+        <label class="check-row compacta"><input type="checkbox" id="expMostrarRespuestas"><span>Mostrar respuestas</span></label>
+        <label class="check-row compacta"><input type="checkbox" id="expSubfiguras"><span>Mostrar subfiguras</span></label>
+      </div>
+      <div class="field-note" id="expResumen"></div>
+    </div>
+    <div id="expLista"></div>
+    <div class="card hidden" id="expPaginacion"></div>
+  </div>
+</div>
+
 <!-- ===== AYUDA ===== -->
 <div class="section" id="section-ayuda">
   <div class="card texto-ayuda">
@@ -248,6 +290,8 @@
     <p><code>m/s^{2}</code> → m/s², <code>v_{0}</code> → v₀, <code>**texto**</code> → negrita. Los botones de símbolos insertan ², °, π, Δ, etc. En los problemas, cada dato se escribe como <code>{{nombre}}</code> (llaves dobles) y se reemplaza por el valor del set, también dentro de las fórmulas. El marcador antiguo <code>{nombre}</code> se sigue aceptando fuera de las fórmulas; las preguntas guardadas se actualizan solas a <code>{{nombre}}</code>.</p>
     <h2>Ecuaciones en LaTeX</h2>
     <p>Escribe la ecuación entre signos de dólar: <code>$ax + by + c = 0$</code> en línea con el texto, o <code>$$v = \frac{d}{t}$$</code> en su propia línea y centrada. Sirve en enunciados, opciones e instrucciones, y se dibuja igual en la vista previa y en la impresión. Ejemplos: <code>$\vec{F} = m\vec{a}$</code>, <code>$E_c = \tfrac{1}{2} m v^{2}$</code>, <code>$\sqrt{2gh}$</code>, <code>$\theta = 30^{\circ}$</code>. Para un signo de dólar literal escribe <code>\$</code>. Las variables de los problemas también funcionan dentro de una ecuación: <code>$v = {{v}}\ \text{m/s}$</code>. Por eso llevan llaves dobles: las simples son los grupos de LaTeX (<code>\vec{F}</code>, <code>E_{c}</code>) y no se tocan. El dibujo lo hace <a href="https://katex.org" target="_blank" rel="noopener">KaTeX</a>, incluido en esta misma página (funciona sin conexión).</p>
+    <h2>Explorador de problemas</h2>
+    <p>Pestaña independiente para consultar un archivo JSON de problemas de libro con la estructura libro → capítulos → secciones → problemas, como "serway_problemas_cap1-9_15.json". Filtra por capítulo, sección, dificultad, figura o respuesta y busca por texto o por número ("P4.23"); muestra enunciados con sus ecuaciones dibujadas, las figuras (y sus subfiguras si lo marcas) y la respuesta del libro plegada. El archivo queda guardado en este navegador, aparte del banco y de las pruebas, hasta que pulses "Quitar archivo".</p>
     <h2>Dónde quedan los datos</h2>
     <p>Todo (banco, pruebas, imágenes) se guarda en este navegador, en este dispositivo; no se envía a ningún servidor. Usa <b>Exportar</b> en Guardadas para hacer copias de seguridad y <b>Importar</b> para llevarlas a otro computador. Después de la primera visita, la página también funciona sin conexión.</p>
   </div>
@@ -314,5 +358,6 @@
 <script src="js/armado.js"></script>
 <script src="js/guardadas.js"></script>
 <script src="js/app.js"></script>
+<script src="js/explorador.js"></script>
 </body>
 </html>

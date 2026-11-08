@@ -145,6 +145,7 @@ prueba ocupa **media hoja A4 apaisada (210 × 148,5 mm) por las dos caras**.
 | `js/armado.js` | Borrador de la prueba, selector de preguntas, sets por forma, generación. |
 | `js/guardadas.js` | Pruebas guardadas, importar/exportar, copia de seguridad. |
 | `js/app.js` | Arranque, pestañas, modales, toasts, registro del service worker. |
+| `js/explorador.js`, `css/explorador.css` | **Explorador de problemas**: pestaña independiente que carga un JSON de problemas de libro (libro → capítulos → secciones → problemas con enunciado, figuras SVG, respuesta; formato de `serway_problemas_cap1-9_15.json`), lo guarda en una IndexedDB propia (`explorador-omr`) y permite filtrar por capítulo, sección, dificultad y texto, con figuras (SVG vía `<img>` + blob) y LaTeX dibujado. No toca el banco ni las pruebas. |
 | `sw.js` | Service worker propio del generador (ámbito `generador/`): precarga los archivos, red primero con caché de respaldo. |
 | `vendor/katex/` | KaTeX 0.19.1 (`katex.min.js`, `katex.min.css`, fuentes woff2, LICENSE) tomado del paquete oficial de npm. Para actualizarlo: `npm pack katex@<versión>`, copiar `dist/katex.min.*` y `dist/fonts/*.woff2`, y subir `VERSION` en `sw.js`. |
 | `img/cabecera_v2.png` | Cabecera OMR v2 recortada (600 dpi). Si cambia la cabecera del calificador, regenerarla desde su `templates/cabecera_v2.pdf` y revisar `CABECERA` en `js/vista.js` (posición de las casillas F). |

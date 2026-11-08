@@ -26,7 +26,11 @@ cambiar algo.
 
 - Scripts clásicos con ámbito global; orden de carga: `vendor/katex` →
   `util` → `exacto` → `formulas` → `almacen` → `modelo` → `vista` → `banco` →
-  `armado` → `guardadas` → `app`.
+  `armado` → `guardadas` → `app` → `explorador`.
+- `explorador.js` (pestaña "Explorador de problemas") es un módulo aparte con
+  su propia IndexedDB (`explorador-omr`): no usa ni modifica el banco, las
+  pruebas ni sus funciones; solo utilidades puras (`escapeHtml`,
+  `dividirMatematicas`, `renderTex`) y `toast`/`confirmar`.
 - Variables de los problemas: `{{v}}` (llaves dobles, también dentro de `$…$`);
   `{v}` solo se acepta fuera de las fórmulas por compatibilidad.
 - `modelo.js`, `formulas.js` y `exacto.js` no tocan el DOM. El cálculo exacto

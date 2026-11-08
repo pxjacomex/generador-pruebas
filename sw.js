@@ -10,7 +10,7 @@
  */
 'use strict';
 
-const VERSION = 'v3';  // subir al añadir o quitar archivos de ASSETS (v3: js/exacto.js)
+const VERSION = 'v4';  // subir al añadir o quitar archivos de ASSETS (v4: explorador de problemas)
 const CACHE = 'generador-' + VERSION;
 const ASSETS = [
   './',
@@ -26,6 +26,8 @@ const ASSETS = [
   './js/armado.js',
   './js/guardadas.js',
   './js/app.js',
+  './js/explorador.js',
+  './css/explorador.css',
   './img/cabecera_v2.png',
   './banco/ejemplos.json',
   './manifest.webmanifest',
