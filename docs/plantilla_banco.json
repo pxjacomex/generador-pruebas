@@ -39,7 +39,7 @@
     { "texto": "", "formula": "2*h/10", "correcta": false }
    ],
    "variables": ["h"],
-   "sets": [ { "h": "20" }, { "h": "45" }, { "h": "80" }, { "h": "125" } ],
+   "sets": [ { "h": "30" }, { "h": "45" }, { "h": "80" }, { "h": "125" } ],
    "formato": { "modo": "exacto", "decimales": 2, "unidad": "s" },
    "creada": "2026-11-08T12:00:00.000Z",
    "modificada": "2026-11-08T12:00:00.000Z"
