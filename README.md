@@ -126,7 +126,7 @@ prueba ocupa **media hoja A4 apaisada (210 × 148,5 mm) por las dos caras**.
   mezclar. La vista previa avisa si una pregunta queda en la misma posición
   en las dos formas.
 - Tipografía del papel: Arial/Helvetica (la de la plantilla original); tamaño
-  configurable de 9 a 18 pt (12 por defecto). Separador decimal: punto por
+  configurable de 9 a 18 pt (11 por defecto). Separador decimal: punto por
   defecto.
 
 ## Archivos

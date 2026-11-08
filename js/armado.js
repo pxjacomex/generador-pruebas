@@ -23,8 +23,11 @@ function armarCargarBorrador() {
       if (op.fuente_pt === 10) op.fuente_pt = OPCIONES_PRUEBA_DEFAULT.fuente_pt;
     }
     if (vGuardada < 3) {
-      if (op.fuente_pt === 16) op.fuente_pt = OPCIONES_PRUEBA_DEFAULT.fuente_pt;
+      if (op.fuente_pt === 16) op.fuente_pt = 12;
       if (ARMADO.prueba.instrucciones.trim() === INSTRUCCIONES_ANTERIORES) ARMADO.prueba.instrucciones = '';
+    }
+    if (vGuardada < 4) {
+      if (op.fuente_pt === 12) op.fuente_pt = OPCIONES_PRUEBA_DEFAULT.fuente_pt;   // 11 pt
     }
     op.v = OPCIONES_PRUEBA_DEFAULT.v;
     armarGuardarBorrador();

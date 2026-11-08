@@ -30,8 +30,8 @@ const MODELO = {
 const INSTRUCCIONES_ANTERIORES = 'Marca en la cabecera, rellenando todo el cuadro, la única alternativa correcta de cada pregunta.';
 
 const OPCIONES_PRUEBA_DEFAULT = {
-  v: 3,                     // versión de estos valores por defecto (migración del borrador)
-  fuente_pt: 12,            // tamaño de letra del cuerpo (puntos)
+  v: 4,                     // versión de estos valores por defecto (migración del borrador)
+  fuente_pt: 11,            // tamaño de letra del cuerpo (puntos)
   marcar_F: true,           // imprimir la casilla F ya pintada (A→1, B→2)
   separador: '.',           // separador decimal de los números
   disposicion: 'a4',        // 'a4': dos pruebas por hoja A4; 'a5': páginas sueltas
