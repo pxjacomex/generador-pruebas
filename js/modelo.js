@@ -32,7 +32,8 @@ const INSTRUCCIONES_ANTERIORES = 'Marca en la cabecera, rellenando todo el cuadr
 const OPCIONES_PRUEBA_DEFAULT = {
   v: 4,                     // versión de estos valores por defecto (migración del borrador)
   tipo_prueba: 'control',   // 'control': control de lectura (5 preguntas, media hoja A4 por cara);
-                            // 'deberes': prueba de deberes (sin tope, una hoja A4 completa por cara)
+                            // 'deberes': prueba de deberes (sin tope, una hoja A4 completa por cara);
+                            // 'diez': prueba de 10 preguntas (cabecera de 10, hoja A4 completa por cara)
   fuente_pt: 11,            // tamaño de letra del cuerpo (puntos)
   marcar_F: true,           // imprimir la casilla F ya pintada (A→1, B→2)
   separador: '.',           // separador decimal de los números
@@ -268,7 +269,7 @@ function normalizarPrueba(p) {
   t.opciones.fuente_pt = clamp(parseFloat(t.opciones.fuente_pt) || OPCIONES_PRUEBA_DEFAULT.fuente_pt, FUENTE_PT_MIN, FUENTE_PT_MAX);
   delete t.opciones.ancho_cabecera_mm;   // ahora es una constante (CABECERA_ANCHO_MM en vista.js)
   t.opciones.separador = t.opciones.separador === ',' ? ',' : '.';
-  t.opciones.tipo_prueba = t.opciones.tipo_prueba === 'deberes' ? 'deberes' : 'control';
+  t.opciones.tipo_prueba = ['control', 'deberes', 'diez'].includes(t.opciones.tipo_prueba) ? t.opciones.tipo_prueba : 'control';
   t.opciones.disposicion = t.opciones.disposicion === 'a5' ? 'a5' : 'a4';
   return t;
 }
@@ -393,6 +394,14 @@ function generarFormas(prueba, preguntasPorId, semilla) {
   });
 
   return { semilla, generada: ahoraISO(), A, B, snapshot, avisos };
+}
+
+// Número de preguntas que pide el tipo de prueba (null = sin tope: deberes).
+function objetivoPreguntas(prueba) {
+  const t = prueba && prueba.opciones ? prueba.opciones.tipo_prueba : 'control';
+  if (t === 'deberes') return null;
+  if (t === 'diez') return 10;
+  return MODELO.N_PREGUNTAS;
 }
 
 // "2.5 min", "8 min", "1 h 15 min" (null si no hay tiempo).

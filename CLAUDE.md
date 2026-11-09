@@ -43,8 +43,9 @@ para herramientas externas, en `docs/FORMATO_BANCO.md` + `docs/banco.schema.json
 
 ## Qué no cambiar sin recalibrar
 
-- `img/cabecera_v2.png` y `CABECERA` en `js/vista.js` (posición de las casillas
-  F): deben coincidir con la cabecera v2 del calificador.
+- `img/cabecera_v2.png`, `img/cabecera_10.png` y `CABECERAS` en `js/vista.js`
+  (ancho impreso, posición y casillas F de cada cabecera): deben coincidir con
+  las cabeceras del calificador.
 - Ancho impreso de la cabecera (`CABECERA_ANCHO_MM` = 206 mm, con el borde
   inferior fijo en `CABECERA_FONDO_MM`) y márgenes de `.cara`: la tinta de los
   marcadores debe quedar a ≥ 5 mm del borde del papel (hoy ≈5,5 mm a los lados

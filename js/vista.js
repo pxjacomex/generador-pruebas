@@ -30,53 +30,78 @@ const CABECERA_FONDO_MM = CARA_PAD_TOP_MM + 198 * 23.5 / 210;   // ≈ 27,16 mm
 const PX_POR_MM = 96 / 25.4;
 const ESPACIO_PASO_MM = 5;   // paso de los botones +/− del espacio en blanco
 
-// Geometría de img/cabecera_v2.png: recorte de la cabecera v2 (x 0..210 mm,
-// y 1,0..24,5 mm de la página) a 600 dpi. Casillas F en coordenadas de página
-// (templates/generar_cabecera_v2.py): centros (187,1; 5,70) y (193,9; 5,70),
-// lado 4 mm.
-const CABECERA = {
-  src: 'img/cabecera_v2.png',
-  ancho_mm: 210, alto_mm: 23.5, y0_mm: 1.0,
-  F: { 1: { cx: 187.1, cy: 5.70 }, 2: { cx: 193.9, cy: 5.70 } },
-  lado_mm: 4.0,
+// Cabeceras OMR disponibles. Las casillas F se dan en fracciones del ancho y
+// del alto de la imagen (centro y lado) para pintar la F de cada forma.
+//  - v2 (5 preguntas): img/cabecera_v2.png, recorte de la cabecera v2 del
+//    calificador (x 0..210 mm, y 1,0..24,5 mm de la página) a 600 dpi; las
+//    casillas F están en (187,1; 5,70) y (193,9; 5,70) mm de página, lado 4 mm.
+//    Lleva 3,6 mm de blanco a los lados, así que se imprime a 206 mm con el
+//    borde inferior fijo (CABECERA_FONDO_MM).
+//  - 10 (10 preguntas, P1..P10 en tres filas): img/cabecera_10.png (2000 × 291
+//    px), con solo 0,5 % de blanco a los lados: se imprime a 200 mm con el
+//    borde superior a 5 mm para que la tinta quede a ≈6 mm del papel.
+const CABECERAS = {
+  v2: {
+    src: 'img/cabecera_v2.png', preguntas: 5,
+    ancho_px: 4961, alto_px: 555,
+    ancho_mm: 206, top_mm: null,            // top_mm null: borde inferior fijo en CABECERA_FONDO_MM
+    F: { 1: { cx: 187.1 / 210, cy: (5.70 - 1.0) / 23.5 }, 2: { cx: 193.9 / 210, cy: (5.70 - 1.0) / 23.5 } },
+    lado: { x: 4.0 / 210, y: 4.0 / 23.5 },
+  },
+  diez: {
+    src: 'img/cabecera_10.png', preguntas: 10,
+    ancho_px: 2000, alto_px: 291,
+    ancho_mm: 200, top_mm: 5,
+    F: { 1: { cx: 1799.5 / 2000, cy: 36 / 291 }, 2: { cx: 1866 / 2000, cy: 36 / 291 } },
+    lado: { x: 41 / 2000, y: 41 / 291 },
+  },
 };
+const CABECERA = CABECERAS.v2;   // compatibilidad con código anterior
 
-let _cabeceraPromesa = null;
-function cargarCabecera() {
-  if (!_cabeceraPromesa) {
-    _cabeceraPromesa = new Promise((resolve, reject) => {
+function cabeceraDe(prueba) {
+  return (prueba && prueba.opciones && prueba.opciones.tipo_prueba === 'diez') ? CABECERAS.diez : CABECERAS.v2;
+}
+function altoCabeceraMm(cab) { return cab.ancho_mm * cab.alto_px / cab.ancho_px; }
+function topCabeceraMm(cab) { return cab.top_mm != null ? cab.top_mm : CABECERA_FONDO_MM - altoCabeceraMm(cab); }
+
+const _cabeceraPromesas = {};
+function cargarCabecera(cab) {
+  cab = cab || CABECERA;
+  if (!_cabeceraPromesas[cab.src]) {
+    _cabeceraPromesas[cab.src] = new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error('No se pudo cargar la imagen de la cabecera (img/cabecera_v2.png)'));
-      img.src = CABECERA.src;
+      img.onerror = () => reject(new Error('No se pudo cargar la imagen de la cabecera (' + cab.src + ')'));
+      img.src = cab.src;
     });
   }
-  return _cabeceraPromesa;
+  return _cabeceraPromesas[cab.src];
 }
 
-// Cabecera con la casilla F pintada (F = 1 o 2); F = 0 → sin marcar.
-async function cabeceraConF(F) {
-  if (VISTA.cabeceras[F]) return VISTA.cabeceras[F];
-  const img = await cargarCabecera();
-  if (!F || !CABECERA.F[F]) { VISTA.cabeceras[F] = img.src; return img.src; }
+// Cabecera `cab` con la casilla F pintada (F = 1 o 2); F = 0 → sin marcar.
+async function cabeceraConF(F, cab) {
+  cab = cab || CABECERA;
+  const clave = cab.src + '|' + F;
+  if (VISTA.cabeceras[clave]) return VISTA.cabeceras[clave];
+  const img = await cargarCabecera(cab);
+  if (!F || !cab.F[F]) { VISTA.cabeceras[clave] = img.src; return img.src; }
   try {
     const c = document.createElement('canvas');
     c.width = img.naturalWidth; c.height = img.naturalHeight;
     const ctx = c.getContext('2d');
     ctx.drawImage(img, 0, 0);
-    const pxPorMm = img.naturalWidth / CABECERA.ancho_mm;
-    const f = CABECERA.F[F];
-    const lado = CABECERA.lado_mm * pxPorMm;
+    const f = cab.F[F];
+    const lx = cab.lado.x * c.width, ly = cab.lado.y * c.height;
     ctx.fillStyle = '#000';
-    ctx.fillRect(f.cx * pxPorMm - lado / 2, (f.cy - CABECERA.y0_mm) * pxPorMm - lado / 2, lado, lado);
+    ctx.fillRect(f.cx * c.width - lx / 2, f.cy * c.height - ly / 2, lx, ly);
     const url = c.toDataURL('image/png');
-    VISTA.cabeceras[F] = url;
+    VISTA.cabeceras[clave] = url;
     return url;
   } catch (e) {
     // Lienzo "contaminado" (p. ej. abriendo el archivo con file://): se usa la
     // cabecera sin marcar y un cuadro negro superpuesto (ver .marca-f en CSS).
     console.warn('Cabecera sin canvas:', e);
-    VISTA.cabeceras[F] = img.src;
+    VISTA.cabeceras[clave] = img.src;
     return img.src;
   }
 }
@@ -182,7 +207,7 @@ function tituloPrueba(prueba) {
 }
 
 // Media hoja (210 × 148,5 mm). cara = 1 (con cabecera OMR) o 2 (dorso).
-const esDeberes = (prueba) => !!(prueba && prueba.opciones && prueba.opciones.tipo_prueba === 'deberes');
+const esDeberes = (prueba) => !!(prueba && prueba.opciones && (prueba.opciones.tipo_prueba === 'deberes' || prueba.opciones.tipo_prueba === 'diez'));   // hoja A4 completa por cara
 
 function construirMedia(prueba, forma, cara, cabeceraURL) {
   // Control de lectura: media hoja A4 (210 × 148,5). Prueba de deberes: hoja A4 completa.
@@ -192,13 +217,15 @@ function construirMedia(prueba, forma, cara, cabeceraURL) {
   media.appendChild(caraEl);
 
   if (cara === 1) {
+    const cabDef = cabeceraDe(prueba);
     const cab = el('div', 'cabecera-omr');
-    const anchoCab = CABECERA_ANCHO_MM;
-    const altoCab = anchoCab * CABECERA.alto_mm / CABECERA.ancho_mm;
+    const anchoCab = cabDef.ancho_mm;
+    const altoCab = altoCabeceraMm(cabDef);
     cab.style.width = anchoCab + 'mm';
     // Se sale del área de márgenes (hacia arriba y a los lados) con márgenes
-    // negativos; el borde inferior queda fijo en CABECERA_FONDO_MM.
-    cab.style.marginTop = (CABECERA_FONDO_MM - altoCab - CARA_PAD_TOP_MM) + 'mm';
+    // negativos. Cabecera v2: borde inferior fijo en CABECERA_FONDO_MM;
+    // cabecera de 10: borde superior a top_mm.
+    cab.style.marginTop = (topCabeceraMm(cabDef) - CARA_PAD_TOP_MM) + 'mm';
     const lado = (210 - 2 * CARA_PAD_LADO_MM - anchoCab) / 2;
     cab.style.marginLeft = lado + 'mm';
     cab.style.marginRight = lado + 'mm';
@@ -209,13 +236,13 @@ function construirMedia(prueba, forma, cara, cabeceraURL) {
     img.style.height = altoCab + 'mm';
     cab.appendChild(img);
     // Si el lienzo no pudo pintar la F (file://), se superpone un cuadro negro.
-    if (prueba.opciones.marcar_F && cabeceraURL && !/^data:/.test(cabeceraURL) && CABECERA.F[forma.F]) {
-      const f = CABECERA.F[forma.F];
+    if (prueba.opciones.marcar_F && cabeceraURL && !/^data:/.test(cabeceraURL) && cabDef.F[forma.F]) {
+      const f = cabDef.F[forma.F];
       const m = el('div', 'marca-f');
-      m.style.left = ((f.cx - CABECERA.lado_mm / 2) / CABECERA.ancho_mm * 100) + '%';
-      m.style.top = ((f.cy - CABECERA.y0_mm - CABECERA.lado_mm / 2) / CABECERA.alto_mm * 100) + '%';
-      m.style.width = (CABECERA.lado_mm / CABECERA.ancho_mm * 100) + '%';
-      m.style.height = (CABECERA.lado_mm / CABECERA.alto_mm * 100) + '%';
+      m.style.left = ((f.cx - cabDef.lado.x / 2) * 100) + '%';
+      m.style.top = ((f.cy - cabDef.lado.y / 2) * 100) + '%';
+      m.style.width = (cabDef.lado.x * 100) + '%';
+      m.style.height = (cabDef.lado.y * 100) + '%';
       cab.appendChild(m);
     }
     caraEl.appendChild(cab);
@@ -625,9 +652,10 @@ async function vistaRenderizar() {
   document.getElementById('vistaLateral').innerHTML = '';
   if (!prueba || !prueba.formas) return;
   const op = prueba.opciones;
+  const cabDef = cabeceraDe(prueba);
   const [urlA, urlB] = await Promise.all([
-    cabeceraConF(op.marcar_F ? prueba.formas.A.F : 0),
-    cabeceraConF(op.marcar_F ? prueba.formas.B.F : 0),
+    cabeceraConF(op.marcar_F ? prueba.formas.A.F : 0, cabDef),
+    cabeceraConF(op.marcar_F ? prueba.formas.B.F : 0, cabDef),
   ]);
   const A1 = construirMedia(prueba, prueba.formas.A, 1, urlA);
   const A2 = construirMedia(prueba, prueba.formas.A, 2, urlA);
@@ -702,10 +730,11 @@ function vistaRenderAvisos() {
   if (prueba && prueba.formas) {
     (prueba.formas.avisos || []).forEach((a) => lista.push({ tipo: 'warn', texto: a }));
     const n = prueba.formas.A.items.length;
-    if (esDeberes(prueba)) {
+    const objetivo = objetivoPreguntas(prueba);
+    if (prueba.opciones.tipo_prueba === 'deberes') {
       if (n > MODELO.N_PREGUNTAS) lista.push({ tipo: 'warn', texto: `Prueba de deberes con ${n} preguntas: la cabecera OMR solo tiene casillas para ${MODELO.N_PREGUNTAS}; las demás se corrigen a mano.` });
-    } else if (n !== MODELO.N_PREGUNTAS) {
-      lista.push({ tipo: 'warn', texto: `La prueba tiene ${n} preguntas; el Calificador OMR lee ${MODELO.N_PREGUNTAS} (P1 a P5).` });
+    } else if (objetivo && n !== objetivo) {
+      lista.push({ tipo: 'warn', texto: `La prueba tiene ${n} preguntas; esta cabecera tiene casillas para ${objetivo} (P1 a P${objetivo}).` });
     }
   }
   if (prueba && prueba.formas) {
@@ -741,7 +770,7 @@ function vistaRenderClaves() {
       <div class="claves-prueba">${encabezado}</div>
       <div><b>Forma A</b> (casilla F = ${A.F}): <code>${escapeHtml(claveTexto(A))}</code></div>
       <div><b>Forma B</b> (casilla F = ${B.F}): <code>${escapeHtml(claveTexto(B))}</code></div>
-      <div class="field-note">En el Calificador OMR, pestaña Clave: "Formato 1" es la Forma A y "Formato 2" la Forma B. Si la casilla F va impresa ya marcada, el calificador elige la clave solo.</div>
+      <div class="field-note">En el Calificador OMR, pestaña Clave: "Formato 1" es la Forma A y "Formato 2" la Forma B. Si la casilla F va impresa ya marcada, el calificador elige la clave solo.${prueba.opciones.tipo_prueba === 'diez' ? ' La cabecera de 10 preguntas requiere que el calificador tenga la calibración para P1 a P10.' : ''}</div>
     </div>
     <div class="table-wrap"><table class="tabla-claves">
       <thead><tr><th>#</th><th>Forma A</th><th>Forma B</th></tr></thead>
@@ -774,7 +803,7 @@ async function vistaMostrar(prueba) {
   const deberes = esDeberes(prueba);
   document.getElementById('vistaDisposicionWrap').classList.toggle('hidden', deberes);
   document.getElementById('vistaInvertirWrap').classList.toggle('hidden', deberes || op.disposicion === 'a5');
-  document.getElementById('vistaMeta').textContent += deberes ? ' · prueba de deberes (hoja A4 completa por cara)' : '';
+  document.getElementById('vistaMeta').textContent += prueba.opciones.tipo_prueba === 'deberes' ? ' · prueba de deberes (hoja A4 completa por cara)' : (prueba.opciones.tipo_prueba === 'diez' ? ' · prueba de 10 preguntas (cabecera de 10, hoja A4 completa por cara)' : '');
   vistaRenderClaves();
   switchSection('vista');
   await vistaRenderizar();

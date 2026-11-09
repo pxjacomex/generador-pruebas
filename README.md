@@ -58,10 +58,11 @@ Interfaz y comentarios del código en **español**.
     lo guardado para resolver los ids de las pruebas); *Recargar banco
     guardado* la rellena, y una importación con la vista vacía muestra solo lo
     importado.
-- **Tipo de prueba**: *Control de lectura* (5 preguntas, media hoja A4 por
-  cara, el formato original) o *Prueba de deberes* (sin tope de preguntas,
-  tiempo estimado acumulado y una hoja A4 completa por cara: A1, A2, B1, B2;
-  `opciones.tipo_prueba`). Las preguntas pueden traer `tiempo_estimado` en
+- **Tipo de prueba** (`opciones.tipo_prueba`): *Control de lectura* (5
+  preguntas, cabecera v2, media hoja A4 por cara, el formato original),
+  *Prueba de deberes* (sin tope de preguntas, tiempo estimado acumulado y una
+  hoja A4 completa por cara: A1, A2, B1, B2) o *Prueba de 10 preguntas*
+  (cabecera de 10 casilleros, hoja A4 completa por cara). Las preguntas pueden traer `tiempo_estimado` en
   minutos, que se muestra como globo ⏱ y se suma en Armar.
 - **Armar**: título, curso, fecha, instrucciones, tamaño de letra; 5 preguntas
   elegidas del banco con un selector que filtra por texto, tema y tipo y
@@ -153,6 +154,7 @@ prueba ocupa **media hoja A4 apaisada (210 × 148,5 mm) por las dos caras**.
 | `js/explorador.js`, `css/explorador.css` | **Explorador de problemas**: pestaña independiente que carga un JSON de problemas de libro (libro → capítulos → secciones → problemas con enunciado, figuras SVG, respuesta; formato de `serway_problemas_cap1-9_15.json`), lo guarda en una IndexedDB propia (`explorador-omr`) y permite filtrar por capítulo, sección, dificultad y texto, con figuras (SVG vía `<img>` + blob) y LaTeX dibujado. No toca el banco ni las pruebas. |
 | `sw.js` | Service worker propio del generador (ámbito `generador/`): precarga los archivos, red primero con caché de respaldo. |
 | `vendor/katex/` | KaTeX 0.19.1 (`katex.min.js`, `katex.min.css`, fuentes woff2, LICENSE) tomado del paquete oficial de npm. Para actualizarlo: `npm pack katex@<versión>`, copiar `dist/katex.min.*` y `dist/fonts/*.woff2`, y subir `VERSION` en `sw.js`. |
+| `img/cabecera_10.png` | Cabecera OMR de 10 preguntas (P1–P10 en tres filas, 2000 × 291 px) para el tipo "Prueba de 10 preguntas"; se imprime a 200 mm con el borde superior a 5 mm (tinta a ≈6 mm del papel). Casillas F en `CABECERAS.diez` de `js/vista.js`. |
 | `img/cabecera_v2.png` | Cabecera OMR v2 recortada (600 dpi). Si cambia la cabecera del calificador, regenerarla desde su `templates/cabecera_v2.pdf` y revisar `CABECERA` en `js/vista.js` (posición de las casillas F). |
 | `banco/ejemplos.json` | Preguntas de ejemplo (Física) en el formato de exportación del banco. |
 | `docs/FORMATO_BANCO.md`, `docs/banco.schema.json`, `docs/plantilla_banco.json` | Especificación del formato del banco: explicación campo a campo con un bloque de instrucciones para pedir bancos a una IA, esquema JSON Schema (borrador 07) y plantilla mínima válida (la descarga el botón "Plantilla del formato" de Banco). |
