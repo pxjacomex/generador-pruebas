@@ -524,6 +524,7 @@ async function vistaCorteAutomatico(letra) {
 // 2): arrastre u ▲ ▼ ⇅ para el orden y la cara, y −/+/🔒 para el espacio.
 function vistaRenderPaneles() {
   const lateral = document.getElementById('vistaLateral');
+  const scrollPrevio = lateral.scrollTop;   // vaciar el panel lo devuelve arriba; se restaura al final
   lateral.innerHTML = '';
   const prueba = VISTA.prueba;
   if (!prueba || !prueba.formas) return;
@@ -536,6 +537,8 @@ function vistaRenderPaneles() {
     [1, 2].forEach((cara) => {
       const reg = VISTA.caras[letra] && VISTA.caras[letra][cara];
       const seccion = el('div', 'panel-espacios');
+      seccion.dataset.forma = letra;
+      seccion.dataset.cara = String(cara);
       const ids = reg ? reg.ids : [];
       const conEspacio = distribuir && reg && reg.libre > 0 && ids.length > 0;
       const fr = conEspacio ? fraccionesDeCara(prueba, letra, cara) : [];
@@ -574,7 +577,51 @@ function vistaRenderPaneles() {
       lateral.appendChild(seccion);
     });
   });
+  lateral.scrollTop = scrollPrevio;
+  _primeraVisible = vistaMarcarVisibles(lateral);   // conserva el resaltado sin mover el panel
 }
+
+// ---- El panel sigue a las hojas que se ven ----
+// Al recorrer las hojas, la sección de cada media hoja o página visible se
+// resalta y el panel (que tiene scroll propio cuando no cabe) se desplaza
+// para que la primera de ellas quede a la vista. No se mueve justo después
+// de que el usuario haya manipulado el propio panel (rueda, toque, clic),
+// para no quitarle lo que estaba mirando.
+let _primeraVisible = null;
+let _ultimaInteraccionPanel = 0;
+// Marca con .visible las secciones de las medias hojas que están en pantalla y
+// devuelve la más alta (o null si no hay ninguna o el panel no es fijo).
+function vistaMarcarVisibles(lateral) {
+  if (getComputedStyle(lateral).position !== 'sticky') return null;   // pantallas estrechas: panel bajo las hojas
+  const vh = window.innerHeight;
+  const visibles = [];
+  document.querySelectorAll('#hojas .media').forEach((m) => {
+    const r = m.getBoundingClientRect();
+    const vis = Math.max(0, Math.min(r.bottom, vh) - Math.max(r.top, 0));
+    const letra = m.classList.contains('forma-A') ? 'A' : 'B';
+    const cara = m.classList.contains('cara-1') ? '1' : '2';
+    const sec = lateral.querySelector(`.panel-espacios[data-forma="${letra}"][data-cara="${cara}"]`);
+    if (!sec) return;
+    sec.classList.toggle('visible', vis > 0);
+    if (vis > 0) visibles.push({ sec, top: r.top });
+  });
+  if (!visibles.length) return null;
+  visibles.sort((a, b) => a.top - b.top);
+  return visibles[0].sec;
+}
+function vistaSincronizarPanel() {
+  const lateral = document.getElementById('vistaLateral');
+  if (!lateral || !VISTA.prueba || !VISTA.prueba.formas) return;
+  const primera = vistaMarcarVisibles(lateral);
+  if (!primera || primera === _primeraVisible) return;
+  _primeraVisible = primera;
+  if (Date.now() - _ultimaInteraccionPanel < 1500) return;
+  if (lateral.scrollHeight <= lateral.clientHeight + 1) return;   // todo el panel cabe: nada que desplazar
+  lateral.scrollTo({ top: Math.max(0, primera.offsetTop - 6), behavior: 'smooth' });
+}
+window.addEventListener('scroll', () => {
+  if (document.getElementById('section-vista').classList.contains('active')) window.requestAnimationFrame(vistaSincronizarPanel);
+}, { passive: true });
 
 // ---- Arrastrar y soltar (delegado en #vistaLateral) ----
 VISTA.arrastre = null;
@@ -593,6 +640,7 @@ function quitarIndicador() {
 function vistaInicializarArrastre() {
   const lateral = document.getElementById('vistaLateral');
   if (!lateral) return;
+  ['wheel', 'touchstart', 'touchmove', 'pointerdown', 'keydown'].forEach((ev) => lateral.addEventListener(ev, () => { _ultimaInteraccionPanel = Date.now(); }, { passive: true }));
   lateral.addEventListener('dragstart', (e) => {
     const fila = e.target.closest && e.target.closest('.fila-orden');
     if (!fila) return;
@@ -711,6 +759,8 @@ async function vistaRenderizar() {
   vistaAjustarEscala();
   vistaRenderAvisos();
   vistaRenderPaneles();
+  _primeraVisible = null;
+  vistaSincronizarPanel();
 }
 
 function vistaAjustarEscala() {
@@ -901,6 +951,6 @@ async function vistaRemezclar() {
 }
 
 window.addEventListener('resize', debounce(() => {
-  if (document.getElementById('section-vista').classList.contains('active')) vistaAjustarEscala();
+  if (document.getElementById('section-vista').classList.contains('active')) { vistaAjustarEscala(); _primeraVisible = null; vistaSincronizarPanel(); }
   ajustarPapelesVisibles();
 }, 150));

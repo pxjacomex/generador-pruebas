@@ -294,6 +294,8 @@ table.tabla-sets, table.tabla-valores, table.tabla-claves { border-collapse: col
 }
 .panel-espacios h3 { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 .panel-espacios h3 small { font-weight: 500; color: var(--text-dim); }
+.panel-espacios.visible { border-color: var(--accent-text); box-shadow: 0 0 0 2px rgba(11,143,88,0.15); }
+.panel-espacios.visible h3 > span:first-child::after { content: ' · en pantalla'; font-weight: 500; color: var(--accent-text); font-size: 11px; }
 .panel-espacios .field-note { margin-top: 6px; }
 .btn-x.ancho { width: auto; padding: 0 7px; font-size: 11px; }
 .lista-orden { min-height: 28px; border-radius: 8px; }
