@@ -305,7 +305,9 @@ function selectorRender() {
           <div class="item-texto">${textoEnriquecido(resumenPregunta(q, 140))}</div>
           <div class="item-acciones">
             <button class="btn btn-ghost btn-mini" onclick="selectorVer('${q.id}')">👁️ Ver</button>
-            <button class="btn btn-primary btn-mini" onclick="selectorAgregar('${q.id}')" ${ya || rev.errores.length || lleno ? 'disabled' : ''}>＋ Agregar</button>
+            ${ya
+              ? `<button class="btn btn-ghost btn-mini peligro" onclick="selectorQuitar('${q.id}')" title="Sacar esta pregunta de la prueba">✖ Quitar</button>`
+              : `<button class="btn btn-primary btn-mini" onclick="selectorAgregar('${q.id}')" ${rev.errores.length || lleno ? 'disabled' : ''}>＋ Agregar</button>`}
           </div>
         </div>
       </div>`;
@@ -316,10 +318,24 @@ function selectorVer(id) {
   const q = bancoPorId().get(id);
   if (!q) return;
   const ya = ARMADO.prueba.items.some((it) => it.preguntaId === id);
-  mostrarVistaPregunta(q, { alAgregar: ya ? null : (pregunta) => armarAgregar(pregunta) });
+  mostrarVistaPregunta(q, ya ? { alQuitar: () => selectorQuitar(id) } : { alAgregar: (pregunta) => armarAgregar(pregunta) });
 }
 
 function selectorAgregar(id) {
   const q = bancoPorId().get(id);
   if (q) armarAgregar(q);
+}
+
+// Saca de la prueba una pregunta desde el selector: en las ya elegidas el botón
+// "Agregar" se sustituye por "Quitar", así no hace falta cerrar el modal.
+function selectorQuitar(id) {
+  const p = ARMADO.prueba;
+  const i = p.items.findIndex((it) => it.preguntaId === id);
+  if (i < 0) return;
+  p.items.splice(i, 1);
+  armarGuardarBorrador();
+  armarRender();
+  selectorRender();
+  bancoRender();
+  toast(`Pregunta quitada (${p.items.length} de ${objetivoPreguntas(p)})`);
 }

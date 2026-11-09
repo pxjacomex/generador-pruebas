@@ -65,9 +65,10 @@ Interfaz y comentarios del código en **español**.
   en Armar, en el selector y en la vista previa). Las preguntas pueden traer `tiempo_estimado` en
   minutos, que se muestra como globo ⏱ en las listas.
 - **Armar**: título, curso, fecha, instrucciones, tamaño de letra; 5 preguntas
-  elegidas del banco con un selector que filtra por texto, tema y tipo y
-  muestra cada pregunta antes de agregarla; por problema, el set de cada
-  forma (al azar o fijo).
+  elegidas del banco con un selector que filtra por texto, tema y tipo,
+  muestra cada pregunta antes de agregarla y permite quitar las ya elegidas
+  (el botón "Agregar" pasa a "Quitar"); por problema, el set de cada forma
+  (al azar o fijo).
 - **Generar**: la forma A sale con las preguntas en orden aleatorio y la B con
   otro orden en el que ninguna pregunta repite posición; en cada pregunta las
   opciones se mezclan de forma distinta en A y B (la correcta cambia de letra)

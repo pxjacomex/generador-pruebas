@@ -129,7 +129,8 @@ archivo `banco_preguntas_<fecha>.json` (ver paso 10).
    la fecha y las instrucciones. Deja marcada *Imprimir la casilla F ya
    marcada*.
 2. Pulsa **＋ Agregar del banco** y elige 5 preguntas (puedes ver cada una
-   antes de agregarla). El contador debe quedar en **5 / 5**.
+   antes de agregarla; en las ya elegidas el botón pasa a **✖ Quitar**, por
+   si cambias de idea). El contador debe quedar en **5 / 5**.
 3. En los problemas con datos, deja *Al azar (distinto en A y B)* o fija el
    set de cada forma.
 4. Pulsa **🎲 Generar formas A y B**. Se abre la vista previa y la prueba queda

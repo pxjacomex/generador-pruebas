@@ -180,7 +180,8 @@ textarea.input { resize: vertical; line-height: 1.4; min-height: 44px; }
   border-radius: 12px; padding: 12px; margin-bottom: 8px;
 }
 .item-pregunta.compacta { padding: 10px; }
-.item-pregunta.ya { opacity: 0.6; }
+.item-pregunta.ya { background: #f3faf6; border-color: rgba(11,143,88,0.35); }
+.item-pregunta.ya .miniatura, .item-pregunta.ya .item-texto { opacity: 0.6; }
 .item-pregunta.faltante { border-color: var(--error); }
 .item-orden { display: flex; flex-direction: column; align-items: center; gap: 4px; font-weight: 700; color: var(--text-dim); }
 .miniatura { width: 72px; height: 54px; object-fit: contain; background: #fff; border: 1px solid var(--border); border-radius: 6px; flex: 0 0 auto; }

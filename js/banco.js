@@ -716,7 +716,7 @@ function editorPreview() {
 // ============================================
 function mostrarVistaPregunta(pregunta, opts) {
   opts = opts || {};
-  BANCO.modalPregunta = { pregunta, setIndice: 0, alAgregar: opts.alAgregar || null };
+  BANCO.modalPregunta = { pregunta, setIndice: 0, alAgregar: opts.alAgregar || null, alQuitar: opts.alQuitar || null };
   const esCalc = pregunta.tipo === 'calculo';
   document.getElementById('modalPreguntaMeta').innerHTML =
     (pregunta.tema ? `<span class="badge tema">${escapeHtml(pregunta.tema)}</span> ` : '') + globoEtiqueta(pregunta) + ' ' + globoTiempo(pregunta) + ` <span class="badge">${etiquetaTipo(pregunta)}</span>`;
@@ -724,8 +724,8 @@ function mostrarVistaPregunta(pregunta, opts) {
   sel.classList.toggle('hidden', !esCalc || pregunta.sets.length === 0);
   sel.innerHTML = pregunta.sets.map((_, i) => `<option value="${i}">Set ${i + 1}</option>`).join('');
   sel.value = '0';
-  const btn = document.getElementById('modalPreguntaAgregar');
-  btn.classList.toggle('hidden', !opts.alAgregar);
+  document.getElementById('modalPreguntaAgregar').classList.toggle('hidden', !opts.alAgregar);
+  document.getElementById('modalPreguntaQuitar').classList.toggle('hidden', !opts.alQuitar);
   abrirModal('modalPregunta');   // antes de dibujar: el papel necesita medirse visible
   modalPreguntaRender();
 }
@@ -752,5 +752,11 @@ function modalPreguntaRender() {
 function modalPreguntaAgregar() {
   const m = BANCO.modalPregunta;
   if (m && m.alAgregar) m.alAgregar(m.pregunta);
+  cerrarModal('modalPregunta');
+}
+
+function modalPreguntaQuitar() {
+  const m = BANCO.modalPregunta;
+  if (m && m.alQuitar) m.alQuitar(m.pregunta);
   cerrarModal('modalPregunta');
 }
