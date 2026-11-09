@@ -386,7 +386,7 @@ function generarFormas(prueba, preguntasPorId, semilla) {
   const snapshot = {};
   items.forEach(({ pregunta }) => {
     snapshot[pregunta.id] = {
-      id: pregunta.id, tema: pregunta.tema, etiqueta: pregunta.etiqueta || '', tipo: pregunta.tipo,
+      id: pregunta.id, tema: pregunta.tema, etiqueta: pregunta.etiqueta || '', tiempo_estimado: pregunta.tiempo_estimado != null ? pregunta.tiempo_estimado : null, tipo: pregunta.tipo,
       enunciado: pregunta.enunciado, imagen: pregunta.imagen ? Object.assign({}, pregunta.imagen) : null,
       nSets: pregunta.tipo === 'calculo' ? pregunta.sets.length : 0,
     };

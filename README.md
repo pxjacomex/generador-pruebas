@@ -62,7 +62,7 @@ Interfaz y comentarios del código en **español**.
   preguntas, cabecera v2, media hoja A4 por cara, el formato original) o
   *Prueba de 10 preguntas* (cabecera de 10 casilleros, una hoja A4 completa
   por cara: A1, A2, B1, B2; tope de 10 preguntas y tiempo estimado acumulado
-  en Armar y en el selector). Las preguntas pueden traer `tiempo_estimado` en
+  en Armar, en el selector y en la vista previa). Las preguntas pueden traer `tiempo_estimado` en
   minutos, que se muestra como globo ⏱ en las listas.
 - **Armar**: título, curso, fecha, instrucciones, tamaño de letra; 5 preguntas
   elegidas del banco con un selector que filtra por texto, tema y tipo y

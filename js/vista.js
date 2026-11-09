@@ -803,6 +803,22 @@ async function vistaMostrar(prueba) {
   document.getElementById('vistaDisposicionWrap').classList.toggle('hidden', completa);
   document.getElementById('vistaInvertirWrap').classList.toggle('hidden', completa || op.disposicion === 'a5');
   document.getElementById('vistaMeta').textContent += completa ? ' · prueba de 10 preguntas (cabecera de 10, hoja A4 completa por cara)' : '';
+  // Tiempo estimado acumulado (prueba de 10): de la copia guardada con la
+  // prueba o, si es anterior a ese campo, del banco.
+  const tiempoEl = document.getElementById('vistaTiempo');
+  if (completa) {
+    const porId = bancoPorId();
+    const preguntas = prueba.formas.A.items.map((it) => {
+      const s = (prueba.formas.snapshot || {})[it.preguntaId];
+      if (s && s.tiempo_estimado != null) return s;
+      return porId.get(it.preguntaId) || s || null;
+    });
+    const st = sumarTiempos(preguntas);
+    tiempoEl.innerHTML = `⏱ Tiempo estimado total: <b>${formatearTiempo(st.total) || '0 min'}</b>${st.sin ? ` <span class="field-note">(${st.sin} pregunta${st.sin === 1 ? '' : 's'} sin tiempo)</span>` : ''}`;
+    tiempoEl.classList.remove('hidden');
+  } else {
+    tiempoEl.classList.add('hidden');
+  }
   vistaRenderClaves();
   switchSection('vista');
   await vistaRenderizar();
