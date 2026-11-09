@@ -81,6 +81,14 @@ function armarRender() {
   const contador = document.getElementById('armarContador');
   contador.textContent = `${n} / ${objetivo}`;
   contador.className = 'badge ' + (n === objetivo ? 'ok' : 'warn');
+  // Prueba de 10 preguntas: tiempo estimado acumulado de las elegidas
+  const tiempoEl = document.getElementById('armarTiempo');
+  if (p.opciones.tipo_prueba === 'diez' && n) {
+    tiempoEl.innerHTML = textoTiempoTotal(p, porId);
+    tiempoEl.classList.remove('hidden');
+  } else {
+    tiempoEl.classList.add('hidden');
+  }
   armarActualizarBadge();
 
   const avisos = [];
@@ -141,6 +149,13 @@ function armarRender() {
   document.getElementById('armarOrdenNota').classList.toggle('hidden', n < 2);
 }
 
+// "⏱ Tiempo estimado total: 24.5 min (2 preguntas sin tiempo)" para la prueba actual.
+function textoTiempoTotal(p, porId) {
+  porId = porId || bancoPorId();
+  const st = sumarTiempos(p.items.map((it) => porId.get(it.preguntaId)).filter(Boolean));
+  return `⏱ Tiempo estimado total: <b>${formatearTiempo(st.total) || '0 min'}</b>${st.sin ? ` <span class="field-note">(${st.sin} pregunta${st.sin === 1 ? '' : 's'} sin tiempo)</span>` : ''}`;
+}
+
 function armarSet(i, forma, valor) {
   const it = ARMADO.prueba.items[i];
   if (!it) return;
@@ -169,12 +184,16 @@ function armarAgregar(pregunta) {
   if (p.items.some((it) => it.preguntaId === pregunta.id)) { toast('Esa pregunta ya está en la prueba', 'warn'); return; }
   const rev = comprobarPregunta(pregunta);
   if (rev.errores.length) { toast('La pregunta está incompleta; corrígela en el banco antes de usarla', 'error'); return; }
+  if (p.opciones.tipo_prueba === 'diez' && p.items.length >= objetivoPreguntas(p)) {
+    toast(`La prueba de 10 preguntas ya tiene ${objetivoPreguntas(p)}; quita una antes de agregar otra`, 'warn');
+    return;
+  }
   p.items.push({ preguntaId: pregunta.id, setA: 'auto', setB: 'auto' });
   armarGuardarBorrador();
   armarRender();
   selectorRender();
   bancoRender();
-  toast(`Pregunta agregada (${p.items.length} de ${MODELO.N_PREGUNTAS})`);
+  toast(`Pregunta agregada (${p.items.length} de ${objetivoPreguntas(p)})`);
 }
 
 async function armarNueva() {
@@ -253,6 +272,14 @@ function selectorRender() {
   const filtro = { texto: document.getElementById('selectorBuscar').value, tema: document.getElementById('selectorTema').value, tipo: document.getElementById('selectorTipo').value };
   const lista = bancoFiltrar(BANCO.preguntas, filtro);
   const enPrueba = new Set(ARMADO.prueba.items.map((it) => it.preguntaId));
+  // Resumen de la prueba en construcción: contador y, en la de 10, tiempo acumulado
+  const p = ARMADO.prueba;
+  const objetivo = objetivoPreguntas(p);
+  const lleno = p.opciones.tipo_prueba === 'diez' && p.items.length >= objetivo;
+  const resumen = document.getElementById('selectorResumen');
+  resumen.innerHTML = `<span class="badge ${p.items.length === objetivo ? 'ok' : 'warn'}">${p.items.length} / ${objetivo}</span>`
+    + (p.opciones.tipo_prueba === 'diez' ? ` <span class="tiempo-total">${textoTiempoTotal(p)}</span>` : '')
+    + (lleno ? ' <span class="field-note">La prueba ya tiene sus 10 preguntas.</span>' : '');
   if (BANCO.preguntas.length === 0) {
     cont.innerHTML = BANCO.todas.length
       ? '<div class="vacio">La vista del banco está vacía. En la pestaña Banco pulsa "Recargar banco guardado" o importa un archivo.</div>'
@@ -278,7 +305,7 @@ function selectorRender() {
           <div class="item-texto">${textoEnriquecido(resumenPregunta(q, 140))}</div>
           <div class="item-acciones">
             <button class="btn btn-ghost btn-mini" onclick="selectorVer('${q.id}')">👁️ Ver</button>
-            <button class="btn btn-primary btn-mini" onclick="selectorAgregar('${q.id}')" ${ya || rev.errores.length ? 'disabled' : ''}>＋ Agregar</button>
+            <button class="btn btn-primary btn-mini" onclick="selectorAgregar('${q.id}')" ${ya || rev.errores.length || lleno ? 'disabled' : ''}>＋ Agregar</button>
           </div>
         </div>
       </div>`;

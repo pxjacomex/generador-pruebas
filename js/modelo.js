@@ -409,6 +409,13 @@ function formatearTiempo(min) {
   return (Number.isInteger(r) ? String(r) : r.toFixed(1)) + ' min';
 }
 
+// Suma de tiempos estimados de una lista de preguntas → { total, sin } (sin = cuántas no lo tienen).
+function sumarTiempos(preguntas) {
+  let total = 0, sin = 0;
+  preguntas.forEach((q) => { if (q && typeof q.tiempo_estimado === 'number') total += q.tiempo_estimado; else sin++; });
+  return { total: Math.round(total * 10) / 10, sin };
+}
+
 // Texto de la clave de una forma para el calificador: "1-B 2-D 3-A 4-C 5-B".
 function claveTexto(forma) {
   return forma.items.map((it) => `${it.numero}-${it.correcta}`).join('  ');

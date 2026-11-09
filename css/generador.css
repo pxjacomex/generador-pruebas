@@ -154,6 +154,9 @@ textarea.input { resize: vertical; line-height: 1.4; min-height: 44px; }
 .badge.tema { color: var(--purple); border-color: rgba(111,56,201,0.35); background: #f2ecfd; }
 .badge.etiqueta { color: var(--info); border-color: rgba(31,102,199,0.35); background: #e8f0fc; }
 .badge.tiempo { color: #7a4b00; border-color: rgba(168,100,0,0.3); background: #fff6e6; font-variant-numeric: tabular-nums; }
+.tiempo-total { font-size: 13px; color: var(--text); margin: -2px 0 10px; }
+.selector-resumen { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: -4px 0 10px; font-size: 13px; }
+.selector-resumen .tiempo-total { margin: 0; }
 .badge.ok { color: var(--accent-text); border-color: rgba(11,143,88,0.35); background: #e4f8ee; }
 .badge.warn { color: var(--warn); border-color: rgba(168,100,0,0.35); background: var(--warn-bg); }
 .badge.error { color: var(--error); border-color: rgba(201,40,79,0.35); background: var(--error-bg); }
