@@ -77,32 +77,15 @@ function armarRender() {
   const porId = bancoPorId();
   const cont = document.getElementById('armarItems');
   const n = p.items.length;
-  const deberes = p.opciones.tipo_prueba === 'deberes';
   const objetivo = objetivoPreguntas(p);
   const contador = document.getElementById('armarContador');
-  if (deberes) {
-    contador.textContent = `${n} pregunta${n === 1 ? '' : 's'}`;
-    contador.className = 'badge ' + (n ? 'ok' : 'warn');
-  } else {
-    contador.textContent = `${n} / ${objetivo}`;
-    contador.className = 'badge ' + (n === objetivo ? 'ok' : 'warn');
-  }
-  // Tiempo estimado acumulado (prueba de deberes)
-  const tiempoEl = document.getElementById('armarTiempo');
-  const seleccionadas = p.items.map((it) => porId.get(it.preguntaId)).filter(Boolean);
-  const st = sumarTiempos(seleccionadas);
-  if (deberes && n) {
-    tiempoEl.innerHTML = `⏱ Tiempo estimado total: <b>${formatearTiempo(st.total) || '0 min'}</b>${st.sin ? ` <span class="field-note">(${st.sin} pregunta${st.sin === 1 ? '' : 's'} sin tiempo)</span>` : ''}`;
-    tiempoEl.classList.remove('hidden');
-  } else {
-    tiempoEl.classList.add('hidden');
-  }
+  contador.textContent = `${n} / ${objetivo}`;
+  contador.className = 'badge ' + (n === objetivo ? 'ok' : 'warn');
   armarActualizarBadge();
 
   const avisos = [];
-  if (n === 0) avisos.push(deberes ? 'Agrega preguntas del banco.' : `Agrega preguntas del banco. Esta cabecera tiene casillas para ${objetivo} preguntas (P1 a P${objetivo}).`);
-  else if (!deberes && n !== objetivo) avisos.push(`La prueba tiene ${n} pregunta${n === 1 ? '' : 's'}; esta cabecera tiene casillas para exactamente ${objetivo}.`);
-  else if (deberes && n > MODELO.N_PREGUNTAS) avisos.push(`Prueba de deberes con ${n} preguntas: la cabecera OMR solo tiene casillas para ${MODELO.N_PREGUNTAS}; las demás se corrigen a mano.`);
+  if (n === 0) avisos.push(`Agrega preguntas del banco. Esta cabecera tiene casillas para ${objetivo} preguntas (P1 a P${objetivo}).`);
+  else if (n !== objetivo) avisos.push(`La prueba tiene ${n} pregunta${n === 1 ? '' : 's'}; esta cabecera tiene casillas para exactamente ${objetivo}.`);
   const faltan = p.items.filter((it) => !porId.has(it.preguntaId));
   if (faltan.length) avisos.push(`${faltan.length} pregunta${faltan.length === 1 ? ' ya no está' : 's ya no están'} en el banco (quítala${faltan.length === 1 ? '' : 's'} de la lista).`);
   const av = document.getElementById('armarAviso');
@@ -231,7 +214,7 @@ async function armarGenerar() {
   const p = ARMADO.prueba;
   if (p.items.length === 0) { toast('Agrega preguntas antes de generar', 'error'); return; }
   const objetivo = objetivoPreguntas(p);
-  if (objetivo && p.items.length !== objetivo) {
+  if (p.items.length !== objetivo) {
     const ok = await confirmar(`La prueba tiene ${p.items.length} preguntas`, `La cabecera elegida tiene casillas para exactamente ${objetivo}. ¿Generar igual?`);
     if (!ok) return;
   }

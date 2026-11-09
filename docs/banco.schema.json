@@ -30,7 +30,7 @@
         "id": { "type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9_.-]+$", "description": "Único en todo el banco. Al reimportar, una pregunta con el mismo id reemplaza a la anterior. Recomendado: q_<fuente>_<cap>_<sub>_<nnn>." },
         "tema": { "type": "string", "description": "Agrupa y filtra. Recomendado: \"C.S - Título del subcapítulo\", p. ej. \"2.7 - Objetos en caída libre\"." },
         "etiqueta": { "type": "string", "maxLength": 40, "description": "Texto libre opcional; se ve en las listas, no se imprime." },
-        "tiempo_estimado": { "type": ["number", "null"], "exclusiveMinimum": 0, "description": "Minutos estimados para resolverla (opcional). Se muestra como globo ⏱ y se suma en las pruebas de deberes; no se imprime." },
+        "tiempo_estimado": { "type": ["number", "null"], "exclusiveMinimum": 0, "description": "Minutos estimados para resolverla (opcional). Se muestra como globo ⏱ en las listas; no se imprime." },
         "tipo": { "enum": ["fija", "calculo"] },
         "enunciado": { "type": "string", "minLength": 1, "description": "Texto plano con: $…$ y $$…$$ para LaTeX; ^{2} y _{0} para super/subíndices fuera de las fórmulas; **negrita**; \\n para salto de línea; {{nombre}} para cada dato en tipo calculo. Sin HTML." },
         "imagen": {

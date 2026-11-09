@@ -154,7 +154,6 @@ textarea.input { resize: vertical; line-height: 1.4; min-height: 44px; }
 .badge.tema { color: var(--purple); border-color: rgba(111,56,201,0.35); background: #f2ecfd; }
 .badge.etiqueta { color: var(--info); border-color: rgba(31,102,199,0.35); background: #e8f0fc; }
 .badge.tiempo { color: #7a4b00; border-color: rgba(168,100,0,0.3); background: #fff6e6; font-variant-numeric: tabular-nums; }
-.tiempo-total { font-size: 13px; color: var(--text); margin: -2px 0 10px; }
 .badge.ok { color: var(--accent-text); border-color: rgba(11,143,88,0.35); background: #e4f8ee; }
 .badge.warn { color: var(--warn); border-color: rgba(168,100,0,0.35); background: var(--warn-bg); }
 .badge.error { color: var(--error); border-color: rgba(201,40,79,0.35); background: var(--error-bg); }
@@ -331,7 +330,7 @@ table.tabla-sets, table.tabla-valores, table.tabla-claves { border-collapse: col
   color: var(--text-dim); font-weight: 600; white-space: nowrap;
 }
 .media { width: 210mm; height: 148.5mm; overflow: hidden; position: relative; background: #fff; }
-.media.pagina-a4 { height: 297mm; }   /* prueba de deberes: hoja A4 completa por cara */
+.media.pagina-a4 { height: 297mm; }   /* prueba de 10 preguntas: hoja A4 completa por cara */
 .cara { position: relative; height: 100%; overflow: hidden; padding: 5mm 6mm 5mm; font-size: 10pt; line-height: 1.28; color: #000; }
 .linea-corte {
   position: absolute; left: 0; right: 0; top: 148.5mm; height: 0; border-top: 0.3mm dashed #999; pointer-events: none;

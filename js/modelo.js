@@ -32,7 +32,6 @@ const INSTRUCCIONES_ANTERIORES = 'Marca en la cabecera, rellenando todo el cuadr
 const OPCIONES_PRUEBA_DEFAULT = {
   v: 4,                     // versión de estos valores por defecto (migración del borrador)
   tipo_prueba: 'control',   // 'control': control de lectura (5 preguntas, media hoja A4 por cara);
-                            // 'deberes': prueba de deberes (sin tope, una hoja A4 completa por cara);
                             // 'diez': prueba de 10 preguntas (cabecera de 10, hoja A4 completa por cara)
   fuente_pt: 11,            // tamaño de letra del cuerpo (puntos)
   marcar_F: true,           // imprimir la casilla F ya pintada (A→1, B→2)
@@ -269,7 +268,7 @@ function normalizarPrueba(p) {
   t.opciones.fuente_pt = clamp(parseFloat(t.opciones.fuente_pt) || OPCIONES_PRUEBA_DEFAULT.fuente_pt, FUENTE_PT_MIN, FUENTE_PT_MAX);
   delete t.opciones.ancho_cabecera_mm;   // ahora es una constante (CABECERA_ANCHO_MM en vista.js)
   t.opciones.separador = t.opciones.separador === ',' ? ',' : '.';
-  t.opciones.tipo_prueba = ['control', 'deberes', 'diez'].includes(t.opciones.tipo_prueba) ? t.opciones.tipo_prueba : 'control';
+  t.opciones.tipo_prueba = t.opciones.tipo_prueba === 'diez' ? 'diez' : 'control';
   t.opciones.disposicion = t.opciones.disposicion === 'a5' ? 'a5' : 'a4';
   return t;
 }
@@ -396,12 +395,10 @@ function generarFormas(prueba, preguntasPorId, semilla) {
   return { semilla, generada: ahoraISO(), A, B, snapshot, avisos };
 }
 
-// Número de preguntas que pide el tipo de prueba (null = sin tope: deberes).
+// Número de preguntas que pide el tipo de prueba (casillas de su cabecera).
 function objetivoPreguntas(prueba) {
   const t = prueba && prueba.opciones ? prueba.opciones.tipo_prueba : 'control';
-  if (t === 'deberes') return null;
-  if (t === 'diez') return 10;
-  return MODELO.N_PREGUNTAS;
+  return t === 'diez' ? 10 : MODELO.N_PREGUNTAS;
 }
 
 // "2.5 min", "8 min", "1 h 15 min" (null si no hay tiempo).
@@ -410,13 +407,6 @@ function formatearTiempo(min) {
   if (min >= 60) { const h = Math.floor(min / 60), m = Math.round(min - h * 60); return m ? `${h} h ${m} min` : `${h} h`; }
   const r = Math.round(min * 10) / 10;
   return (Number.isInteger(r) ? String(r) : r.toFixed(1)) + ' min';
-}
-
-// Suma de tiempos estimados de una lista de preguntas → { total, sin } (sin = cuántas no lo tienen).
-function sumarTiempos(preguntas) {
-  let total = 0, sin = 0;
-  preguntas.forEach((q) => { if (q && typeof q.tiempo_estimado === 'number') total += q.tiempo_estimado; else sin++; });
-  return { total: Math.round(total * 10) / 10, sin };
 }
 
 // Texto de la clave de una forma para el calificador: "1-B 2-D 3-A 4-C 5-B".

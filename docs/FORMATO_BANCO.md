@@ -54,7 +54,7 @@ cuando quieras que una IA te genere un banco nuevo.
 | `id` | sí | Único en todo el banco; solo letras, números, `_ . -`. Al reimportar, el mismo `id` **reemplaza** la pregunta anterior en vez de duplicarla. Recomendado: `q_<fuente>_<cap>_<sub>_<nnn>`, p. ej. `q_serway_02_07_013`. |
 | `tema` | sí | Texto con el que se agrupa y filtra. Convención: `"C.S - Título del subcapítulo"`, p. ej. `"1.3 - Análisis dimensional"`. |
 | `etiqueta` | no | Texto libre corto (≤ 40). Se ve en las listas, nunca se imprime. |
-| `tiempo_estimado` | no | Minutos estimados para resolver la pregunta, como número (`2.5`). Se muestra como globo ⏱ en las listas y se suma en las pruebas de deberes; no se imprime. Si falta, no se muestra nada. |
+| `tiempo_estimado` | no | Minutos estimados para resolver la pregunta, como número (`2.5`). Se muestra como globo ⏱ en las listas; no se imprime. Si falta, no se muestra nada. |
 | `tipo` | sí | `"fija"` (cuatro alternativas de texto) o `"calculo"` (datos variables y fórmulas). |
 | `enunciado` | sí | Texto plano, sin HTML. Ver §3. |
 | `imagen` | no | `null`, o `{ "datos": "data:image/png;base64,…", "ancho_mm": 55, "posicion": "derecha" }` (`posicion` también `"abajo"`; `ancho_mm` 15–190; PNG, JPEG o SVG). |
