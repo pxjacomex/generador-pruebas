@@ -85,6 +85,12 @@ function globoEtiqueta(p) {
   return p.etiqueta ? `<span class="badge etiqueta" title="Etiqueta">🏷 ${escapeHtml(p.etiqueta)}</span>` : '';
 }
 
+// Tiempo estimado (campo opcional tiempo_estimado, en minutos); vacío si no lo hay.
+function globoTiempo(p) {
+  const t = formatearTiempo(p.tiempo_estimado);
+  return t ? `<span class="badge tiempo" title="Tiempo estimado">⏱ ${t}</span>` : '';
+}
+
 function bancoFiltrar(preguntas, filtro) {
   const t = (filtro.texto || '').trim().toLowerCase();
   return preguntas.filter((p) => {
@@ -151,6 +157,7 @@ function bancoRender() {
           <div class="item-meta">
             ${p.tema ? `<span class="badge tema">${escapeHtml(p.tema)}</span>` : '<span class="badge">sin tema</span>'}
             ${globoEtiqueta(p)}
+            ${globoTiempo(p)}
             <span class="badge">${etiquetaTipo(p)}</span>
             ${estado}
             ${enPrueba.has(p.id) ? '<span class="badge ok">en la prueba</span>' : ''}
@@ -351,9 +358,15 @@ function editorRender() {
             <label>Tema (para filtrar el banco)</label>
             <input class="input" list="listaTemas" value="${escapeHtml(p.tema)}" oninput="editorCampo('tema', this.value)" placeholder="p. ej. Cinemática">
           </div>
-          <div class="form-group">
-            <label>Etiqueta (opcional; se ve en las listas, no en la impresión)</label>
-            <input class="input" list="listaEtiquetas" maxlength="40" value="${escapeHtml(p.etiqueta || '')}" oninput="editorCampo('etiqueta', this.value)" placeholder="p. ej. fácil, control 2, ejemplo 4.3">
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Etiqueta (opcional; se ve en las listas, no en la impresión)</label>
+              <input class="input" list="listaEtiquetas" maxlength="40" value="${escapeHtml(p.etiqueta || '')}" oninput="editorCampo('etiqueta', this.value)" placeholder="p. ej. fácil, control 2, ejemplo 4.3">
+            </div>
+            <div class="form-group">
+              <label>Tiempo estimado (minutos, opcional)</label>
+              <input class="input" type="number" min="0" step="0.1" value="${p.tiempo_estimado != null ? p.tiempo_estimado : ''}" oninput="editorTiempo(this.value)" placeholder="p. ej. 2.5">
+            </div>
           </div>
           <div class="form-group">
             <label>Enunciado</label>
@@ -489,6 +502,11 @@ const editorPreviewDebounced = debounce(() => editorPreview(), 200);
 function editorCampo(campo, valor) {
   BANCO.editando[campo] = valor;
   editorPreviewDebounced();
+}
+
+function editorTiempo(valor) {
+  const t = normalizarNumero(valor);
+  BANCO.editando.tiempo_estimado = (isFinite(t) && t > 0) ? Math.round(t * 100) / 100 : null;
 }
 
 function editorTipo(tipo) {
@@ -701,7 +719,7 @@ function mostrarVistaPregunta(pregunta, opts) {
   BANCO.modalPregunta = { pregunta, setIndice: 0, alAgregar: opts.alAgregar || null };
   const esCalc = pregunta.tipo === 'calculo';
   document.getElementById('modalPreguntaMeta').innerHTML =
-    (pregunta.tema ? `<span class="badge tema">${escapeHtml(pregunta.tema)}</span> ` : '') + globoEtiqueta(pregunta) + ` <span class="badge">${etiquetaTipo(pregunta)}</span>`;
+    (pregunta.tema ? `<span class="badge tema">${escapeHtml(pregunta.tema)}</span> ` : '') + globoEtiqueta(pregunta) + ' ' + globoTiempo(pregunta) + ` <span class="badge">${etiquetaTipo(pregunta)}</span>`;
   const sel = document.getElementById('modalPreguntaSet');
   sel.classList.toggle('hidden', !esCalc || pregunta.sets.length === 0);
   sel.innerHTML = pregunta.sets.map((_, i) => `<option value="${i}">Set ${i + 1}</option>`).join('');

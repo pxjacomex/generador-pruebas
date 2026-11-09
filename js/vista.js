@@ -182,8 +182,11 @@ function tituloPrueba(prueba) {
 }
 
 // Media hoja (210 × 148,5 mm). cara = 1 (con cabecera OMR) o 2 (dorso).
+const esDeberes = (prueba) => !!(prueba && prueba.opciones && prueba.opciones.tipo_prueba === 'deberes');
+
 function construirMedia(prueba, forma, cara, cabeceraURL) {
-  const media = el('div', `media forma-${forma.letra} cara-${cara}`);
+  // Control de lectura: media hoja A4 (210 × 148,5). Prueba de deberes: hoja A4 completa.
+  const media = el('div', `media forma-${forma.letra} cara-${cara}${esDeberes(prueba) ? ' pagina-a4' : ''}`);
   const caraEl = el('div', 'cara');
   caraEl.style.fontSize = prueba.opciones.fuente_pt + 'pt';
   media.appendChild(caraEl);
@@ -537,7 +540,8 @@ function vistaRenderPaneles() {
       else if (reg && ids.length && reg.libre <= 0) nota = '<div class="field-note">Esta cara no tiene espacio libre que repartir.</div>';
       const acciones = (conEspacio ? ` <button type="button" class="btn-x" title="Repartir el espacio por igual y desbloquear" onclick="vistaIgualar('${letra}', ${cara})">⟲</button>` : '')
         + (forma.corte != null && cara === 1 ? ` <button type="button" class="btn-x ancho" title="Volver al reparto automático entre caras" onclick="vistaCorteAutomatico('${letra}')">auto</button>` : '');
-      seccion.innerHTML = `<h3><span>Forma ${letra} · cara ${cara} <small>${cara === 1 ? 'frente' : 'dorso'}</small></span><span>${acciones}</span></h3>`
+      const nombreCara = esDeberes(prueba) ? `página ${cara}` : `cara ${cara}`;
+      seccion.innerHTML = `<h3><span>Forma ${letra} · ${nombreCara} <small>${cara === 1 ? 'frente' : 'dorso'}</small></span><span>${acciones}</span></h3>`
         + `<div class="lista-orden" data-forma="${letra}" data-cara="${cara}">${filas || '<div class="lista-vacia">Sin preguntas: arrastra aquí</div>'}</div>${nota}`;
       lateral.appendChild(seccion);
     });
@@ -630,7 +634,15 @@ async function vistaRenderizar() {
   const B1 = construirMedia(prueba, prueba.formas.B, 1, urlB);
   const B2 = construirMedia(prueba, prueba.formas.B, 2, urlB);
 
-  if (op.disposicion === 'a5') {
+  if (esDeberes(prueba)) {
+    // Prueba de deberes: cuatro hojas A4 completas (A1, A2, B1, B2); las
+    // páginas 1 son la cara 1 (frente) y las 2 la cara 2 (dorso).
+    [[A1, 1], [A2, 2], [B1, 1], [B2, 2]].forEach(([m, cara]) => {
+      const h = el('div', `hoja a4 cara-${cara}`);
+      h.appendChild(m);
+      hojas.appendChild(h);
+    });
+  } else if (op.disposicion === 'a5') {
     [[A1, 1], [A2, 2], [B1, 1], [B2, 2]].forEach(([m, cara]) => {
       const h = el('div', `hoja a5 cara-${cara}`);
       h.appendChild(m);
@@ -647,7 +659,10 @@ async function vistaRenderizar() {
   // Etiquetas de cada hoja (solo pantalla)
   Array.from(hojas.children).forEach((h, i) => {
     const et = el('div', 'etiqueta-hoja');
-    if (op.disposicion === 'a5') {
+    if (esDeberes(prueba)) {
+      const m = h.firstElementChild;
+      et.textContent = `Hoja A4 ${i + 1} · Forma ${m.classList.contains('forma-A') ? 'A' : 'B'} · ${m.classList.contains('cara-1') ? 'página 1 (frente)' : 'página 2 (dorso)'}`;
+    } else if (op.disposicion === 'a5') {
       const m = h.firstElementChild;
       et.textContent = `Página ${i + 1} · Forma ${m.classList.contains('forma-A') ? 'A' : 'B'} · ${m.classList.contains('cara-1') ? 'cara 1 (frente)' : 'cara 2 (dorso)'}`;
     } else {
@@ -686,8 +701,11 @@ function vistaRenderAvisos() {
   const lista = [];
   if (prueba && prueba.formas) {
     (prueba.formas.avisos || []).forEach((a) => lista.push({ tipo: 'warn', texto: a }));
-    if (prueba.formas.A.items.length !== MODELO.N_PREGUNTAS) {
-      lista.push({ tipo: 'warn', texto: `La prueba tiene ${prueba.formas.A.items.length} preguntas; el Calificador OMR lee ${MODELO.N_PREGUNTAS} (P1 a P5).` });
+    const n = prueba.formas.A.items.length;
+    if (esDeberes(prueba)) {
+      if (n > MODELO.N_PREGUNTAS) lista.push({ tipo: 'warn', texto: `Prueba de deberes con ${n} preguntas: la cabecera OMR solo tiene casillas para ${MODELO.N_PREGUNTAS}; las demás se corrigen a mano.` });
+    } else if (n !== MODELO.N_PREGUNTAS) {
+      lista.push({ tipo: 'warn', texto: `La prueba tiene ${n} preguntas; el Calificador OMR lee ${MODELO.N_PREGUNTAS} (P1 a P5).` });
     }
   }
   if (prueba && prueba.formas) {
@@ -753,7 +771,10 @@ async function vistaMostrar(prueba) {
   const n = prueba.formas.A.items.length;
   selCara.innerHTML = '<option value="auto">Automático</option>' + Array.from({ length: n + 1 }, (_, k) => `<option value="${k}">${k} en la cara 1</option>`).join('');
   selCara.value = (op.preguntas_cara1 === 'auto' || op.preguntas_cara1 == null) ? 'auto' : String(op.preguntas_cara1);
-  document.getElementById('vistaInvertirWrap').classList.toggle('hidden', op.disposicion === 'a5');
+  const deberes = esDeberes(prueba);
+  document.getElementById('vistaDisposicionWrap').classList.toggle('hidden', deberes);
+  document.getElementById('vistaInvertirWrap').classList.toggle('hidden', deberes || op.disposicion === 'a5');
+  document.getElementById('vistaMeta').textContent += deberes ? ' · prueba de deberes (hoja A4 completa por cara)' : '';
   vistaRenderClaves();
   switchSection('vista');
   await vistaRenderizar();
@@ -766,7 +787,7 @@ async function vistaOpcion(nombre, valor) {
   prueba.opciones[nombre] = valor;
   if (nombre === 'preguntas_cara1') { prueba.formas.A.corte = null; prueba.formas.B.corte = null; }
   prueba.modificada = ahoraISO();
-  document.getElementById('vistaInvertirWrap').classList.toggle('hidden', prueba.opciones.disposicion === 'a5');
+  document.getElementById('vistaInvertirWrap').classList.toggle('hidden', esDeberes(prueba) || prueba.opciones.disposicion === 'a5');
   await guardarPruebaSilenciosa(prueba);
   await vistaRenderizar();
 }
@@ -793,7 +814,7 @@ function vistaImprimir(modo) {
   if (!prueba || !prueba.formas) { toast('No hay ninguna prueba para imprimir', 'error'); return; }
   document.getElementById('estiloPagina').textContent = modo === 'claves'
     ? '@page { size: A4 portrait; margin: 15mm; }'
-    : estiloDePagina(prueba.opciones.disposicion);
+    : estiloDePagina(esDeberes(prueba) ? 'a4' : prueba.opciones.disposicion);
   document.body.classList.remove('imprimir-cara1', 'imprimir-cara2', 'imprimir-claves');
   if (modo === 'cara1') document.body.classList.add('imprimir-cara1');
   if (modo === 'cara2') document.body.classList.add('imprimir-cara2');

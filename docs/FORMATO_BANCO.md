@@ -35,6 +35,7 @@ cuando quieras que una IA te genere un banco nuevo.
  "id": "q_fuente_02_07_001",
  "tema": "2.7 - Objetos en caída libre",
  "etiqueta": "concepto",
+ "tiempo_estimado": 2.5,
  "tipo": "fija",
  "enunciado": "…",
  "imagen": null,
@@ -53,6 +54,7 @@ cuando quieras que una IA te genere un banco nuevo.
 | `id` | sí | Único en todo el banco; solo letras, números, `_ . -`. Al reimportar, el mismo `id` **reemplaza** la pregunta anterior en vez de duplicarla. Recomendado: `q_<fuente>_<cap>_<sub>_<nnn>`, p. ej. `q_serway_02_07_013`. |
 | `tema` | sí | Texto con el que se agrupa y filtra. Convención: `"C.S - Título del subcapítulo"`, p. ej. `"1.3 - Análisis dimensional"`. |
 | `etiqueta` | no | Texto libre corto (≤ 40). Se ve en las listas, nunca se imprime. |
+| `tiempo_estimado` | no | Minutos estimados para resolver la pregunta, como número (`2.5`). Se muestra como globo ⏱ en las listas y se suma en las pruebas de deberes; no se imprime. Si falta, no se muestra nada. |
 | `tipo` | sí | `"fija"` (cuatro alternativas de texto) o `"calculo"` (datos variables y fórmulas). |
 | `enunciado` | sí | Texto plano, sin HTML. Ver §3. |
 | `imagen` | no | `null`, o `{ "datos": "data:image/png;base64,…", "ancho_mm": 55, "posicion": "derecha" }` (`posicion` también `"abajo"`; `ancho_mm` 15–190; PNG, JPEG o SVG). |
@@ -62,6 +64,7 @@ cuando quieras que una IA te genere un banco nuevo.
 | `sets` | en `calculo` | Lista de juegos de datos, uno por fila: `{ "v": "12", "t": "5" }`. Los valores van **como texto** (`"2.5"` o `"2,5"`; también palabras). Al menos 2 sets, idealmente 3 o 4, para que las formas A y B lleven datos distintos. Comprueba que en ningún set dos opciones den el mismo valor. |
 | `formato` | en `calculo` | `modo`: `"auto"` (hasta N decimales), `"fijo"` (N decimales), `"sig"` (N cifras significativas) o `"exacto"` (fracciones, raíces y π en LaTeX). `decimales`: 0–8. `unidad`: se añade a cada valor, p. ej. `"m/s^{2}"`. |
 | `creada`, `modificada` | no | Fechas ISO 8601. |
+| otros campos | no | Se permiten (p. ej. `categoria`, `justificacion`), pero la app los ignora al importar y no los conserva al exportar. |
 
 ## 3. Texto de enunciados y opciones
 

@@ -58,6 +58,11 @@ Interfaz y comentarios del código en **español**.
     lo guardado para resolver los ids de las pruebas); *Recargar banco
     guardado* la rellena, y una importación con la vista vacía muestra solo lo
     importado.
+- **Tipo de prueba**: *Control de lectura* (5 preguntas, media hoja A4 por
+  cara, el formato original) o *Prueba de deberes* (sin tope de preguntas,
+  tiempo estimado acumulado y una hoja A4 completa por cara: A1, A2, B1, B2;
+  `opciones.tipo_prueba`). Las preguntas pueden traer `tiempo_estimado` en
+  minutos, que se muestra como globo ⏱ y se suma en Armar.
 - **Armar**: título, curso, fecha, instrucciones, tamaño de letra; 5 preguntas
   elegidas del banco con un selector que filtra por texto, tema y tipo y
   muestra cada pregunta antes de agregarla; por problema, el set de cada

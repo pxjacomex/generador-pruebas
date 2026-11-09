@@ -76,6 +76,13 @@
     <h2>Datos de la prueba</h2>
     <div class="grid-2">
       <div class="form-group">
+        <label for="pruebaTipo">Tipo de prueba</label>
+        <select class="select" id="pruebaTipo" onchange="armarCampo('tipo_prueba', this.value)">
+          <option value="control">Control de lectura (5 preguntas, media hoja A4 por cara)</option>
+          <option value="deberes">Prueba de deberes (sin tope, hoja A4 completa por cara)</option>
+        </select>
+      </div>
+      <div class="form-group">
         <label for="pruebaTitulo">Título (se imprime en la cabecera)</label>
         <input class="input" id="pruebaTitulo" maxlength="80" placeholder="p. ej. Prueba de Física · Cinemática" oninput="armarCampo('titulo', this.value)">
       </div>
@@ -134,6 +141,7 @@
       <h2>Preguntas de la prueba <span class="badge" id="armarContador">0 / 5</span></h2>
       <button class="btn btn-primary btn-inline" onclick="armarAbrirSelector()">＋ Agregar del banco</button>
     </div>
+    <div class="tiempo-total hidden" id="armarTiempo"></div>
     <div class="aviso hidden" id="armarAviso"></div>
     <div id="armarItems"></div>
     <div class="field-note hidden" id="armarOrdenNota">Este orden es solo de referencia: al generar, la forma A sale en orden aleatorio y la forma B en otro distinto (ninguna pregunta queda en la misma posición).</div>
@@ -157,7 +165,7 @@
         <span class="field-note" id="vistaMeta"></span>
       </div>
       <div class="toolbar">
-        <label class="campo-inline">Disposición
+        <label class="campo-inline" id="vistaDisposicionWrap">Disposición
           <select class="select" id="vistaDisposicion" onchange="vistaOpcion('disposicion', this.value)">
             <option value="a4">Hojas A4: dos pruebas por hoja (cortar por la mitad)</option>
             <option value="a5">Páginas sueltas de media hoja (210 × 148,5 mm)</option>
@@ -269,6 +277,7 @@
     <h2>Cómo se usa</h2>
     <ol>
       <li><b>Banco:</b> crea las preguntas. El botón <i>Limpiar vista</i> vacía la lista en pantalla (y el selector de Armar) sin borrar nada del dispositivo; <i>Recargar banco guardado</i> la vuelve a llenar, y al importar un archivo con la vista vacía se ven solo sus preguntas. Las de <i>opciones fijas</i> llevan cuatro alternativas de texto. Los <i>problemas con datos</i> llevan variables (<code>{{v}}</code>, <code>{{t}}</code>…) en el enunciado, varios <b>sets de datos</b> y una <b>fórmula por opción</b> que calcula su valor; la correcta se marca con el círculo. Cada pregunta puede llevar una imagen o diagrama, y una <i>etiqueta</i> libre (por ejemplo "fácil" o "control 2") que se ve en las listas y en el buscador, pero nunca en la hoja impresa.</li>
+      <li><b>Tipo de prueba:</b> <i>Control de lectura</i> (por defecto) es el formato de siempre: 5 preguntas y media hoja A4 por cara. <i>Prueba de deberes</i> no tiene tope de preguntas, muestra el tiempo estimado acumulado de las elegidas (campo <code>tiempo_estimado</code> del banco, en minutos, si existe) y se imprime en hojas A4 completas: Forma A página 1 y 2, Forma B página 1 y 2; los botones "Solo cara 1" y "Solo cara 2" imprimen las páginas 1 y las páginas 2.</li>
       <li><b>Armar:</b> escribe el título y elige 5 preguntas del banco (botón "Agregar del banco", con buscador, filtro por tema y por tipo, y vista previa). En los problemas puedes fijar el set de cada forma o dejarlo al azar (siempre distinto en A y B).</li>
       <li><b>Generar formas A y B:</b> la forma A sale con las preguntas en orden aleatorio y la B en otro orden (ninguna pregunta en la misma posición); las opciones también se mezclan de forma distinta y la correcta cambia de letra. La prueba queda guardada en <b>Guardadas</b>.</li>
       <li><b>Vista previa:</b> revisa las hojas tal como se imprimen, mira las claves e imprime. Con <i>Distribuir en dos caras</i> (activada por defecto) las preguntas se reparten entre las dos caras de cada forma y el espacio en blanco sobrante se deja por igual después de cada pregunta; desactívala para que la cara 1 se llene primero.</li>

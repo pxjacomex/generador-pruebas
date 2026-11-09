@@ -51,6 +51,7 @@ function armarCampo(campo, valor) {
   }
   armarGuardarBorrador();
   if (campo === 'titulo') armarActualizarBadge();
+  if (campo === 'tipo_prueba') armarRender();
 }
 
 function armarActualizarBadge() {
@@ -70,18 +71,37 @@ function armarRender() {
   document.getElementById('pruebaFuente').value = String(p.opciones.fuente_pt);
   document.getElementById('pruebaSeparador').value = p.opciones.separador;
   document.getElementById('pruebaMarcarF').checked = !!p.opciones.marcar_F;
+  document.getElementById('pruebaTipo').value = p.opciones.tipo_prueba === 'deberes' ? 'deberes' : 'control';
   document.getElementById('pruebaNombreCara2').checked = p.opciones.mostrar_nombre_cara2 !== false;
 
   const porId = bancoPorId();
   const cont = document.getElementById('armarItems');
   const n = p.items.length;
-  document.getElementById('armarContador').textContent = `${n} / ${MODELO.N_PREGUNTAS}`;
-  document.getElementById('armarContador').className = 'badge ' + (n === MODELO.N_PREGUNTAS ? 'ok' : 'warn');
+  const deberes = p.opciones.tipo_prueba === 'deberes';
+  const contador = document.getElementById('armarContador');
+  if (deberes) {
+    contador.textContent = `${n} pregunta${n === 1 ? '' : 's'}`;
+    contador.className = 'badge ' + (n ? 'ok' : 'warn');
+  } else {
+    contador.textContent = `${n} / ${MODELO.N_PREGUNTAS}`;
+    contador.className = 'badge ' + (n === MODELO.N_PREGUNTAS ? 'ok' : 'warn');
+  }
+  // Tiempo estimado acumulado (prueba de deberes)
+  const tiempoEl = document.getElementById('armarTiempo');
+  const seleccionadas = p.items.map((it) => porId.get(it.preguntaId)).filter(Boolean);
+  const st = sumarTiempos(seleccionadas);
+  if (deberes && n) {
+    tiempoEl.innerHTML = `⏱ Tiempo estimado total: <b>${formatearTiempo(st.total) || '0 min'}</b>${st.sin ? ` <span class="field-note">(${st.sin} pregunta${st.sin === 1 ? '' : 's'} sin tiempo)</span>` : ''}`;
+    tiempoEl.classList.remove('hidden');
+  } else {
+    tiempoEl.classList.add('hidden');
+  }
   armarActualizarBadge();
 
   const avisos = [];
-  if (n === 0) avisos.push('Agrega preguntas del banco. El Calificador OMR lee 5 preguntas (P1 a P5).');
-  else if (n !== MODELO.N_PREGUNTAS) avisos.push(`La prueba tiene ${n} pregunta${n === 1 ? '' : 's'}; el Calificador OMR lee exactamente ${MODELO.N_PREGUNTAS}.`);
+  if (n === 0) avisos.push(deberes ? 'Agrega preguntas del banco.' : 'Agrega preguntas del banco. El Calificador OMR lee 5 preguntas (P1 a P5).');
+  else if (!deberes && n !== MODELO.N_PREGUNTAS) avisos.push(`La prueba tiene ${n} pregunta${n === 1 ? '' : 's'}; el Calificador OMR lee exactamente ${MODELO.N_PREGUNTAS}.`);
+  else if (deberes && n > MODELO.N_PREGUNTAS) avisos.push(`Prueba de deberes con ${n} preguntas: la cabecera OMR solo tiene casillas para ${MODELO.N_PREGUNTAS}; las demás se corrigen a mano.`);
   const faltan = p.items.filter((it) => !porId.has(it.preguntaId));
   if (faltan.length) avisos.push(`${faltan.length} pregunta${faltan.length === 1 ? ' ya no está' : 's ya no están'} en el banco (quítala${faltan.length === 1 ? '' : 's'} de la lista).`);
   const av = document.getElementById('armarAviso');
@@ -120,6 +140,7 @@ function armarRender() {
           <div class="item-meta">
             ${q.tema ? `<span class="badge tema">${escapeHtml(q.tema)}</span>` : ''}
             ${globoEtiqueta(q)}
+            ${globoTiempo(q)}
             <span class="badge">${etiquetaTipo(q)}</span>
             ${estado}
           </div>
@@ -208,7 +229,7 @@ function regenerarFormas(prueba, semilla) {
 async function armarGenerar() {
   const p = ARMADO.prueba;
   if (p.items.length === 0) { toast('Agrega preguntas antes de generar', 'error'); return; }
-  if (p.items.length !== MODELO.N_PREGUNTAS) {
+  if (p.opciones.tipo_prueba !== 'deberes' && p.items.length !== MODELO.N_PREGUNTAS) {
     const ok = await confirmar(`La prueba tiene ${p.items.length} preguntas`, `El Calificador OMR lee exactamente ${MODELO.N_PREGUNTAS}. ¿Generar igual?`);
     if (!ok) return;
   }
@@ -264,6 +285,7 @@ function selectorRender() {
           <div class="item-meta">
             ${q.tema ? `<span class="badge tema">${escapeHtml(q.tema)}</span>` : ''}
             ${globoEtiqueta(q)}
+            ${globoTiempo(q)}
             <span class="badge">${etiquetaTipo(q)}</span>
             ${rev.errores.length ? '<span class="badge error">⚠ incompleta</span>' : ''}
             ${ya ? '<span class="badge ok">en la prueba</span>' : ''}

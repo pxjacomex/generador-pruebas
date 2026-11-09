@@ -31,6 +31,8 @@ const INSTRUCCIONES_ANTERIORES = 'Marca en la cabecera, rellenando todo el cuadr
 
 const OPCIONES_PRUEBA_DEFAULT = {
   v: 4,                     // versión de estos valores por defecto (migración del borrador)
+  tipo_prueba: 'control',   // 'control': control de lectura (5 preguntas, media hoja A4 por cara);
+                            // 'deberes': prueba de deberes (sin tope, una hoja A4 completa por cara)
   fuente_pt: 11,            // tamaño de letra del cuerpo (puntos)
   marcar_F: true,           // imprimir la casilla F ya pintada (A→1, B→2)
   separador: '.',           // separador decimal de los números
@@ -51,6 +53,7 @@ function nuevaPregunta(tipo) {
     id: uid('q'),
     tema: '',
     etiqueta: '',
+    tiempo_estimado: null,   // minutos (número) o null si no se indica
     tipo: tipo === 'calculo' ? 'calculo' : 'fija',
     enunciado: '',
     imagen: null,
@@ -73,6 +76,7 @@ function normalizarPregunta(p) {
     id: (typeof p.id === 'string' && p.id) ? p.id : base.id,
     tema: String(p.tema || '').trim(),
     etiqueta: String(p.etiqueta || '').trim(),
+    tiempo_estimado: (() => { const t = normalizarNumero(p.tiempo_estimado); return (isFinite(t) && t > 0) ? Math.round(t * 100) / 100 : null; })(),
     tipo: p.tipo === 'calculo' ? 'calculo' : 'fija',
     enunciado: String(p.enunciado || ''),
     mezclar: p.mezclar !== false,
@@ -264,6 +268,7 @@ function normalizarPrueba(p) {
   t.opciones.fuente_pt = clamp(parseFloat(t.opciones.fuente_pt) || OPCIONES_PRUEBA_DEFAULT.fuente_pt, FUENTE_PT_MIN, FUENTE_PT_MAX);
   delete t.opciones.ancho_cabecera_mm;   // ahora es una constante (CABECERA_ANCHO_MM en vista.js)
   t.opciones.separador = t.opciones.separador === ',' ? ',' : '.';
+  t.opciones.tipo_prueba = t.opciones.tipo_prueba === 'deberes' ? 'deberes' : 'control';
   t.opciones.disposicion = t.opciones.disposicion === 'a5' ? 'a5' : 'a4';
   return t;
 }
@@ -388,6 +393,21 @@ function generarFormas(prueba, preguntasPorId, semilla) {
   });
 
   return { semilla, generada: ahoraISO(), A, B, snapshot, avisos };
+}
+
+// "2.5 min", "8 min", "1 h 15 min" (null si no hay tiempo).
+function formatearTiempo(min) {
+  if (typeof min !== 'number' || !isFinite(min) || min <= 0) return null;
+  if (min >= 60) { const h = Math.floor(min / 60), m = Math.round(min - h * 60); return m ? `${h} h ${m} min` : `${h} h`; }
+  const r = Math.round(min * 10) / 10;
+  return (Number.isInteger(r) ? String(r) : r.toFixed(1)) + ' min';
+}
+
+// Suma de tiempos estimados de una lista de preguntas → { total, sin } (sin = cuántas no lo tienen).
+function sumarTiempos(preguntas) {
+  let total = 0, sin = 0;
+  preguntas.forEach((q) => { if (q && typeof q.tiempo_estimado === 'number') total += q.tiempo_estimado; else sin++; });
+  return { total: Math.round(total * 10) / 10, sin };
 }
 
 // Texto de la clave de una forma para el calificador: "1-B 2-D 3-A 4-C 5-B".
