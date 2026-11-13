@@ -312,49 +312,24 @@ function generarFormas(prueba, preguntasPorId, semilla) {
     return { setA, setB, permA: null, permB: null };
   });
 
-  // Orden de las opciones. Se recorre cada forma en su orden de impresión y se
-  // elige la posición (letra) de la respuesta correcta de modo que ninguna
-  // letra se repita más de lo imprescindible en la forma: con n preguntas y 4
-  // letras, como máximo ceil(n/4) veces cada una. En la forma B, además, la
-  // correcta cae en una letra distinta a la de la forma A. Los distractores se
+  // Orden de las opciones: primero se decide la letra de la respuesta correcta
+  // de cada pregunta en las dos formas (repartirCorrectas: letras parejas en
+  // cada forma y distinta letra en A y B) y luego los distractores se
   // reparten al azar en las posiciones restantes.
-  const nOps = MODELO.N_OPCIONES;
-  const maxPorLetra = Math.max(1, Math.ceil(items.length / nOps));
-  function asignarPermutaciones(orden, clave, otraClave) {
-    const conteo = new Array(nOps).fill(0);
-    orden.forEach((idxBase) => {
-      const { pregunta } = items[idxBase];
-      const d = decisiones[idxBase];
-      const idxCorrecta = Math.max(0, pregunta.opciones.findIndex((o) => o.correcta));
-      const identidad = Array.from({ length: pregunta.opciones.length }, (_, k) => k);
-      let pos;
-      if (pregunta.mezclar === false) {
-        pos = idxCorrecta;
-        d[clave] = identidad;
-      } else {
-        const posOtra = d[otraClave] ? d[otraClave].indexOf(idxCorrecta) : -1;
-        const libres = identidad.filter((p) => conteo[p] < maxPorLetra);
-        let candidatas = libres.filter((p) => p !== posOtra);
-        if (!candidatas.length) candidatas = libres;
-        if (!candidatas.length) candidatas = identidad.filter((p) => p !== posOtra);
-        if (!candidatas.length) candidatas = identidad;
-        pos = candidatas[enteroAleatorio(rnd, candidatas.length)];
-        const distractores = mezclar(identidad.filter((k) => k !== idxCorrecta), rnd);
-        const perm = [];
-        for (let p = 0, k = 0; p < identidad.length; p++) perm.push(p === pos ? idxCorrecta : distractores[k++]);
-        // Misma letra correcta que en la otra forma (solo si no quedó otra
-        // opción): al menos que el orden de los distractores sea distinto.
-        if (d[otraClave] && perm.every((v, j) => v === d[otraClave][j]) && distractores.length > 1) {
-          const i1 = perm.findIndex((v, j) => j !== pos), i2 = perm.findIndex((v, j) => j !== pos && j !== i1);
-          [perm[i1], perm[i2]] = [perm[i2], perm[i1]];
-        }
-        d[clave] = perm;
-      }
-      conteo[pos]++;
-    });
-  }
-  asignarPermutaciones(ordenA, 'permA', null);
-  asignarPermutaciones(ordenB, 'permB', 'permA');
+  const fijas = items.map(({ pregunta }) => (pregunta.mezclar === false ? indiceCorrecta(pregunta.opciones) : null));
+  const letras = repartirCorrectas(fijas, fijas, MODELO.N_OPCIONES, rnd);
+  items.forEach(({ pregunta }, i) => {
+    const d = decisiones[i];
+    const nOp = pregunta.opciones.length;
+    if (fijas[i] != null) {
+      d.permA = Array.from({ length: nOp }, (_, k) => k);
+      d.permB = d.permA.slice();
+      return;
+    }
+    const idxCorrecta = indiceCorrecta(pregunta.opciones);
+    d.permA = permutacionConCorrecta(nOp, idxCorrecta, letras.A[i], rnd, null);
+    d.permB = permutacionConCorrecta(nOp, idxCorrecta, letras.B[i], rnd, d.permA);
+  });
 
   function construirForma(def, orden, usarSet, usarPerm) {
     const lista = orden.map((idxBase, pos) => {
@@ -387,12 +362,139 @@ function generarFormas(prueba, preguntasPorId, semilla) {
   items.forEach(({ pregunta }) => {
     snapshot[pregunta.id] = {
       id: pregunta.id, tema: pregunta.tema, etiqueta: pregunta.etiqueta || '', tiempo_estimado: pregunta.tiempo_estimado != null ? pregunta.tiempo_estimado : null, tipo: pregunta.tipo,
+      mezclar: pregunta.mezclar !== false,
       enunciado: pregunta.enunciado, imagen: pregunta.imagen ? Object.assign({}, pregunta.imagen) : null,
       nSets: pregunta.tipo === 'calculo' ? pregunta.sets.length : 0,
     };
   });
 
   return { semilla, generada: ahoraISO(), A, B, snapshot, avisos };
+}
+
+function indiceCorrecta(opciones) {
+  return Math.max(0, opciones.findIndex((o) => o.correcta));
+}
+
+// ============================================
+// REPARTO DE LA LETRA CORRECTA
+// ============================================
+// Elige la posición (letra) de la respuesta correcta de cada pregunta en las
+// dos formas:
+//  - En cada forma las letras quedan tan parejas como se puede: con n preguntas
+//    y 4 letras, cada letra sale ⌊n/4⌋ o ⌈n/4⌉ veces (5 preguntas → 2-1-1-1,
+//    una sola letra repetida; 10 → 3-3-2-2). Qué letras llevan la vez de más se
+//    sortea, así a la larga todas son igual de probables.
+//  - Las preguntas fijas (opciones que no se mezclan) conservan su letra y
+//    cuentan en el reparto; las demás lo completan.
+//  - En la forma B ninguna pregunta repite la letra que tiene en la A.
+//  - Entre todas las disposiciones que cumplen lo anterior se toma una al azar
+//    (barajado con rechazo, con una reparación por intercambios de reserva que
+//    en la práctica no hace falta). Coste: unos cientos de operaciones.
+// fijasA[i] / fijasB[i]: posición fija de la pregunta i en cada forma, o null
+// si se mezcla (una pregunta es fija en las dos formas o en ninguna).
+// Devuelve { A: [posición por pregunta], B: [...] }.
+function repartirCorrectas(fijasA, fijasB, nOps, rnd) {
+  const libres = fijasA.map((f, i) => (f == null ? i : -1)).filter((i) => i >= 0);
+  const m = libres.length;
+  // Letras que reciben las preguntas libres: se llena siempre la letra con
+  // menos apariciones (contando las fijas); los empates se sortean. Con
+  // `prohibidas` (conteo de letras de las libres en la forma A) se evita, si se
+  // puede, una cuota imposible de colocar sin repetir la letra de la forma A.
+  function bolsa(fijas, prohibidas) {
+    const total = new Array(nOps).fill(0);
+    fijas.forEach((f) => { if (f != null) total[f]++; });
+    const deLibres = new Array(nOps).fill(0);
+    for (let k = 0; k < m; k++) {
+      const min = Math.min.apply(null, total);
+      let cand = total.map((_, l) => l).filter((l) => total[l] === min);
+      if (prohibidas) {
+        const posibles = cand.filter((l) => deLibres[l] + 1 + prohibidas[l] <= m);
+        if (posibles.length) cand = posibles;
+      }
+      const l = cand[enteroAleatorio(rnd, cand.length)];
+      total[l]++; deLibres[l]++;
+    }
+    const b = [];
+    deLibres.forEach((v, l) => { for (let k = 0; k < v; k++) b.push(l); });
+    return b;
+  }
+  const A = fijasA.slice(), B = fijasB.slice();
+  const bolsaA = mezclar(bolsa(fijasA, null), rnd);
+  libres.forEach((i, k) => { A[i] = bolsaA[k]; });
+
+  const letraA = libres.map((i) => A[i]);
+  const conteoA = new Array(nOps).fill(0);
+  letraA.forEach((l) => conteoA[l]++);
+  const bolsaB = bolsa(fijasB, conteoA);
+  const choques = (p) => p.reduce((s, l, k) => s + (l === letraA[k] ? 1 : 0), 0);
+  let mejor = null, nChoques = Infinity;   // se baraja siempre al menos una vez
+  for (let intento = 0; intento < 300 && nChoques > 0; intento++) {
+    const p = mezclar(bolsaB, rnd);
+    const c = choques(p);
+    if (c < nChoques) { mejor = p; nChoques = c; }
+  }
+  // Reserva: intercambia cada letra repetida con otra posición donde el
+  // cambio no cree un choque nuevo (mantiene las cuotas de la forma B).
+  for (let paso = 0; nChoques > 0 && paso < 50 * m; paso++) {
+    const malos = mejor.map((_, k) => k).filter((k) => mejor[k] === letraA[k]);
+    const k = malos[enteroAleatorio(rnd, malos.length)];
+    let cand = mejor.map((_, j) => j).filter((j) => mejor[j] !== letraA[k] && mejor[k] !== letraA[j]);
+    if (!cand.length) cand = mejor.map((_, j) => j).filter((j) => mejor[j] !== mejor[k]);
+    if (!cand.length) break;
+    const j = cand[enteroAleatorio(rnd, cand.length)];
+    [mejor[k], mejor[j]] = [mejor[j], mejor[k]];
+    nChoques = choques(mejor);
+  }
+  libres.forEach((i, k) => { B[i] = mejor[k]; });
+  return { A, B };
+}
+
+// Orden de las opciones (lista de índices) con la correcta en `pos` y los
+// distractores al azar. Si sale idéntico a `evitar` (la misma pregunta en la
+// otra forma con la misma letra, solo cuando no hubo otra salida), se cambian
+// dos distractores de lugar.
+function permutacionConCorrecta(nOp, idxCorrecta, pos, rnd, evitar) {
+  const distractores = mezclar(Array.from({ length: nOp }, (_, k) => k).filter((k) => k !== idxCorrecta), rnd);
+  const perm = [];
+  for (let p = 0, k = 0; p < nOp; p++) perm.push(p === pos ? idxCorrecta : distractores[k++]);
+  if (evitar && distractores.length > 1 && perm.every((v, j) => v === evitar[j])) {
+    const i1 = perm.findIndex((v, j) => j !== pos), i2 = perm.findIndex((v, j) => j !== pos && j !== i1);
+    [perm[i1], perm[i2]] = [perm[i2], perm[i1]];
+  }
+  return perm;
+}
+
+// Vuelve a barajar solo las opciones de unas formas ya generadas: el orden de
+// las preguntas, sus sets de datos, los cortes de cara y los espacios no
+// cambian. Las letras correctas se reparten como en generarFormas.
+// `seMezcla(preguntaId)` dice si una pregunta admite mezclar sus opciones; las
+// que no, quedan como están. Modifica `formas` y devuelve cuántas preguntas
+// se dejaron sin barajar.
+function rebarajarOpciones(formas, seMezcla, semilla) {
+  semilla = (semilla >>> 0) || semillaNueva();
+  const rnd = crearAleatorio(semilla);
+  const itemsA = formas.A.items;
+  const itemB = new Map(formas.B.items.map((it) => [it.preguntaId, it]));
+  if (itemsA.length !== formas.B.items.length || itemsA.some((it) => !itemB.has(it.preguntaId))) {
+    throw new Error('Las formas A y B no tienen las mismas preguntas; vuelve a generarlas.');
+  }
+  const pares = itemsA.map((a) => ({ a, b: itemB.get(a.preguntaId) }));
+  const fijo = pares.map(({ a }) => !seMezcla(a.preguntaId));
+  const fijasA = pares.map(({ a }, i) => (fijo[i] ? indiceCorrecta(a.opciones) : null));
+  const fijasB = pares.map(({ b }, i) => (fijo[i] ? indiceCorrecta(b.opciones) : null));
+  const letras = repartirCorrectas(fijasA, fijasB, MODELO.N_OPCIONES, rnd);
+  pares.forEach(({ a, b }, i) => {
+    if (fijo[i]) return;
+    [[a, letras.A[i]], [b, letras.B[i]]].forEach(([it, pos]) => {
+      const perm = permutacionConCorrecta(it.opciones.length, indiceCorrecta(it.opciones), pos, rnd, null);
+      it.opciones = perm.map((k) => it.opciones[k]);
+      it.correcta = letraCorrecta(it.opciones);
+    });
+  });
+  formas.A.clave = formas.A.items.map((it) => it.correcta);
+  formas.B.clave = formas.B.items.map((it) => it.correcta);
+  formas.semillaOpciones = semilla;
+  return fijo.filter(Boolean).length;
 }
 
 // Número de preguntas que pide el tipo de prueba (casillas de su cabecera).

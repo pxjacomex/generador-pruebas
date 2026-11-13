@@ -72,14 +72,19 @@ Interfaz y comentarios del código en **español**.
 - **Generar**: la forma A sale con las preguntas en orden aleatorio y la B con
   otro orden en el que ninguna pregunta repite posición; en cada pregunta las
   opciones se mezclan de forma distinta en A y B (la correcta cambia de letra)
-  y los problemas usan sets de datos distintos. Dentro de cada forma, la letra
-  de la respuesta correcta se reparte: ninguna letra se repite más de lo
-  imprescindible (con 5 preguntas, como máximo dos veces). El resultado se guarda con una
+  y los problemas usan sets de datos distintos. Dentro de cada forma, las
+  letras de las respuestas correctas quedan lo más parejas posible: cada una
+  sale ⌊n/4⌋ o ⌈n/4⌉ veces (5 preguntas → 2-1-1-1, una sola letra repetida;
+  10 → 3-3-2-2), las letras que salen de más se sortean y, entre los repartos
+  válidos, se toma uno al azar (`repartirCorrectas` en `js/modelo.js`). El
+  resultado se guarda con una
   copia de las preguntas, así una prueba vieja se ve igual aunque el banco
   cambie después.
 - **Vista previa e impresión**: páginas a tamaño real, claves de ambas formas
   y botones para imprimir todo, solo la cara 1, solo la cara 2 o la hoja de
-  claves.
+  claves; *Volver a mezclar* (todo de nuevo) y *Barajar solo opciones* (solo el
+  orden de las opciones y las claves; el orden de las preguntas y los espacios
+  se conservan).
 - **Guardadas**: ver, editar (vuelve a Armar), duplicar, exportar, importar,
   eliminar; copia de seguridad completa (banco + pruebas).
 
@@ -187,8 +192,10 @@ Pregunta (`preguntas` en IndexedDB y en los JSON exportados):
 
 Prueba: `{ id, titulo, curso, fecha, instrucciones, opciones: {…}, items:
 [{ preguntaId, setA, setB }], formas: { semilla, generada, A, B, snapshot,
-avisos }, espacios: { A: { "<preguntaId>": { frac, bloqueado }, … }, B: {…} } }`;
-cada forma lleva `corte` (preguntas en la cara 1, o null). Cada forma tiene `items: [{ numero, preguntaId, setIndice,
+avisos, semillaOpciones? }, espacios: { A: { "<preguntaId>": { frac, bloqueado }, … }, B: {…} } }`;
+cada forma lleva `corte` (preguntas en la cara 1, o null). `snapshot` guarda
+una copia de cada pregunta usada (tema, enunciado, imagen, `mezclar`…);
+`semillaOpciones` aparece tras pulsar *Barajar solo opciones*. Cada forma tiene `items: [{ numero, preguntaId, setIndice,
 enunciado, opciones: [{ texto, correcta }], correcta }]` y `clave`.
 
 ## Probar en local

@@ -135,7 +135,10 @@ archivo `banco_preguntas_<fecha>.json` (ver paso 10).
    set de cada forma.
 4. Pulsa **🎲 Generar formas A y B**. Se abre la vista previa y la prueba queda
    guardada en **Guardadas**.
-5. Si el orden o la mezcla no te convence, **🎲 Volver a mezclar**.
+5. Si el orden o la mezcla no te convence, **🎲 Volver a mezclar** (genera
+   todo de nuevo). Si solo quieres otro orden de las opciones, sin tocar el
+   orden de las preguntas ni los espacios que ajustaste, usa **🔀 Barajar solo
+   opciones**. En ambos casos las claves cambian.
 
 **Comprobación:** en la vista previa, la cabecera de la forma A tiene pintada
 la casilla F "1" y la de la forma B la "2"; ninguna pregunta ocupa la misma

@@ -52,8 +52,17 @@ function crearAleatorio(semilla) {
   };
 }
 
+// Semilla de 32 bits del generador criptográfico del navegador (nativo, sin
+// coste apreciable); si no existe, la hora mezclada con Math.random.
 function semillaNueva() {
-  return (Date.now() ^ Math.floor(Math.random() * 0x7fffffff)) >>> 0;
+  try {
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      const a = new Uint32Array(1);
+      crypto.getRandomValues(a);
+      if (a[0]) return a[0];
+    }
+  } catch (e) { /* sin crypto: se usa la alternativa */ }
+  return ((Date.now() ^ Math.floor(Math.random() * 0x7fffffff)) >>> 0) || 1;
 }
 
 function enteroAleatorio(rnd, n) { return Math.floor(rnd() * n); }

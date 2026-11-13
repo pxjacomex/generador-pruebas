@@ -840,7 +840,7 @@ async function vistaMostrar(prueba) {
   if (!hay) { document.getElementById('hojas').innerHTML = ''; return; }
   migrarEspacios(prueba);
   document.getElementById('vistaTitulo').textContent = tituloPrueba(prueba) + (prueba.curso ? ' · ' + prueba.curso : '');
-  document.getElementById('vistaMeta').textContent = `Generada el ${fechaCorta(prueba.formas.generada)} · semilla ${prueba.formas.semilla}`;
+  vistaActualizarMeta(prueba);
   const op = prueba.opciones;
   document.getElementById('vistaDisposicion').value = op.disposicion || 'a4';
   document.getElementById('vistaInvertir').checked = !!op.invertir_dorso;
@@ -852,7 +852,6 @@ async function vistaMostrar(prueba) {
   const completa = hojaCompleta(prueba);
   document.getElementById('vistaDisposicionWrap').classList.toggle('hidden', completa);
   document.getElementById('vistaInvertirWrap').classList.toggle('hidden', completa || op.disposicion === 'a5');
-  document.getElementById('vistaMeta').textContent += completa ? ' · prueba de 10 preguntas (cabecera de 10, hoja A4 completa por cara)' : '';
   // Tiempo estimado acumulado (prueba de 10): de la copia guardada con la
   // prueba o, si es anterior a ese campo, del banco.
   const tiempoEl = document.getElementById('vistaTiempo');
@@ -872,6 +871,13 @@ async function vistaMostrar(prueba) {
   vistaRenderClaves();
   switchSection('vista');
   await vistaRenderizar();
+}
+
+function vistaActualizarMeta(prueba) {
+  const f = prueba.formas;
+  document.getElementById('vistaMeta').textContent = `Generada el ${fechaCorta(f.generada)} · semilla ${f.semilla}`
+    + (f.semillaOpciones ? ` · opciones barajadas de nuevo (semilla ${f.semillaOpciones})` : '')
+    + (hojaCompleta(prueba) ? ' · prueba de 10 preguntas (cabecera de 10, hoja A4 completa por cara)' : '');
 }
 
 // Cambios en los controles de la vista (se guardan en la prueba).
@@ -945,6 +951,38 @@ async function vistaRemezclar() {
     await guardarPruebaSilenciosa(prueba);
     await vistaMostrar(prueba);
     toast('Formas A y B generadas de nuevo');
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+// Vuelve a barajar solo el orden de las opciones de cada pregunta (y con él
+// las claves). El orden de las preguntas, su cara, los sets de datos y los
+// espacios en blanco se conservan. Las preguntas marcadas en el banco para no
+// mezclar sus opciones (dato guardado con la prueba o, en pruebas anteriores
+// a ese dato, tomado del banco) quedan como están.
+async function vistaBarajarOpciones() {
+  const prueba = VISTA.prueba;
+  if (!prueba || !prueba.formas) return;
+  const porId = bancoPorId();
+  const seMezcla = (id) => {
+    const s = (prueba.formas.snapshot || {})[id];
+    if (s && typeof s.mezclar === 'boolean') return s.mezclar;
+    const q = porId.get(id);
+    return q ? q.mezclar !== false : false;   // sin ese dato: no se toca
+  };
+  try {
+    const sinBarajar = rebarajarOpciones(prueba.formas, seMezcla, semillaNueva());
+    prueba.modificada = ahoraISO();
+    await guardarPruebaSilenciosa(prueba);
+    const y = window.scrollY;
+    vistaActualizarMeta(prueba);
+    vistaRenderClaves();
+    await vistaRenderizar();
+    window.scrollTo(0, y);
+    const nota = sinBarajar === 1 ? ' (1 pregunta que no se mezcla quedó igual)'
+      : sinBarajar > 1 ? ` (${sinBarajar} preguntas que no se mezclan quedaron igual)` : '';
+    toast('Opciones barajadas de nuevo: las claves cambiaron' + nota);
   } catch (e) {
     toast(e.message, 'error');
   }
